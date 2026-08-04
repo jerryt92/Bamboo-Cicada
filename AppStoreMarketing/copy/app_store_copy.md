@@ -34,8 +34,6 @@
 1. 摇一摇，听见夏天
 2. 震动反馈跟随节奏
 3. 中华传统民间童玩
-4. 竹、纸、绳的声音记忆
-5. 中英双语介绍
 
 ## English
 
@@ -71,5 +69,3 @@ bamboo cicada,Chinese traditional toy,folk toy,sound toy,haptic feedback,vibrati
 1. Shake to Hear Summer
 2. Haptics Follow the Rhythm
 3. A Chinese Folk Toy
-4. Bamboo, Paper, Cord, Sound
-5. Bilingual Toy Introduction

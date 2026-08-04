@@ -2,10 +2,13 @@
 
 ## Upload folders
 
-- `screenshots/iphone-17-pro-max/`
-  - Size: `1320 x 2868`
-  - Based on Apple's iPhone 17 Pro Max portrait layout size, `440 x 956 pt @3x`.
-  - Use for iPhone 17 Pro Max promotional and App Store-style screenshots.
+- `screenshots/iphone-6.5/`
+  - Size: `1242 x 2688`
+  - Use for App Store Connect iPhone 6.5-inch screenshots.
+
+- `screenshots/ipad-13/`
+  - Size: `2048 x 2732`
+  - Use for App Store Connect iPad 13-inch screenshots.
 
 ## Supporting files
 
@@ -19,4 +22,4 @@
   - Contact sheets for quickly checking generated marketing images.
 
 - `generate_marketing_assets.py`
-  - Regenerates bilingual iPhone 17 Pro Max screenshots, website screenshot assets, and social promotional images.
+  - Regenerates three bilingual App Store screenshots for iPhone and iPad, website screenshot assets, and social promotional images.
