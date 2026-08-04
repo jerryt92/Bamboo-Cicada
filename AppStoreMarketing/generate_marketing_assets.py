@@ -175,7 +175,7 @@ def make_screenshot(
     dot_r = round(17 * scale)
     d.ellipse((cx - dot_r, cy - dot_r, cx + dot_r, cy + dot_r), fill=(174, 32, 26))
 
-    bg.save(output_dir / filename)
+    bg.convert("RGB").save(output_dir / filename)
     return bg
 
 
@@ -198,7 +198,7 @@ def make_social_cards() -> None:
         draw_wrapped(d, subtitle, (864, y + 32), 560, sub_font, (255, 230, 165), line_gap=12)
         d.rounded_rectangle((864, 590, 1464, 674), radius=42, fill=(174, 32, 26, 236))
         d.text((906, 614), cta, font=cta_font, fill=(255, 246, 220))
-        img.save(WEB_ASSETS / filename)
+        img.convert("RGB").save(WEB_ASSETS / filename)
 
 
 def make_contact_sheet(images: list[Image.Image], filename: str, source_size: tuple[int, int]) -> None:
