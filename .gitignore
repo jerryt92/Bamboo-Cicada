@@ -8,8 +8,11 @@
 
 # Xcode build products
 build/
+.DerivedData/
 DerivedData/
 DerivedData-*/
+ModuleCache.noindex/
+*.pcm
 *.xcarchive
 
 # Xcode user state

@@ -13,9 +13,11 @@ final class CicadaBuzzer: ObservableObject {
     private var players: [AVAudioPlayer] = []
     private var nextPlayerIndex = 0
     private var isRunning = false
+    private var hasScheduledHardwarePrewarm = false
     private var routeObserver: NSObjectProtocol?
     private var interruptionObserver: NSObjectProtocol?
     private let audioStartOffset: TimeInterval = 0
+    private let playerPoolSize = 12
 
     func start() {
         guard !isRunning else {
@@ -30,7 +32,7 @@ final class CicadaBuzzer: ObservableObject {
         if players.isEmpty,
            let url = Bundle.main.url(forResource: "WawawaUnit", withExtension: "m4a") {
             do {
-                players = try (0..<18).map { _ in
+                players = try (0..<playerPoolSize).map { _ in
                     let audioPlayer = try AVAudioPlayer(contentsOf: url)
                     audioPlayer.numberOfLoops = 0
                     audioPlayer.enableRate = true
@@ -39,7 +41,7 @@ final class CicadaBuzzer: ObservableObject {
                     audioPlayer.prepareToPlay()
                     return audioPlayer
                 }
-                prewarmAudioHardware()
+                scheduleAudioHardwarePrewarm()
                 updateStatus(triggered: false)
             } catch {
                 statusText = "音频加载失败: \(error.localizedDescription)"
@@ -76,8 +78,18 @@ final class CicadaBuzzer: ObservableObject {
         }
     }
 
+    private func scheduleAudioHardwarePrewarm() {
+        guard !hasScheduledHardwarePrewarm else { return }
+        hasScheduledHardwarePrewarm = true
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            guard let self, self.isRunning else { return }
+            self.prewarmAudioHardware()
+        }
+    }
+
     private func prewarmAudioHardware() {
-        players.forEach { player in
+        for player in players.prefix(3) {
             player.volume = 0
             player.currentTime = 0
             player.play()
@@ -97,6 +109,7 @@ final class CicadaBuzzer: ObservableObject {
         }
         nextPlayerIndex = 0
         isRunning = false
+        hasScheduledHardwarePrewarm = false
         removeAudioObservers()
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }

@@ -13,11 +13,11 @@ struct GestureProtectedView<Content: View>: UIViewControllerRepresentable {
         self.content = content()
     }
 
-    func makeUIViewController(context: Context) -> GestureDeferringHostingController<AnyView> {
+    func makeUIViewController(context: Context) -> GestureDeferringHostingController {
         GestureDeferringHostingController(rootView: fullScreenContent)
     }
 
-    func updateUIViewController(_ uiViewController: GestureDeferringHostingController<AnyView>, context: Context) {
+    func updateUIViewController(_ uiViewController: GestureDeferringHostingController, context: Context) {
         uiViewController.rootView = fullScreenContent
         uiViewController.setNeedsUpdateOfHomeIndicatorAutoHidden()
         uiViewController.setNeedsUpdateOfScreenEdgesDeferringSystemGestures()
@@ -32,7 +32,7 @@ struct GestureProtectedView<Content: View>: UIViewControllerRepresentable {
     }
 }
 
-final class GestureDeferringHostingController<Content: View>: UIHostingController<Content> {
+final class GestureDeferringHostingController: UIHostingController<AnyView> {
     private var appliedSafeAreaCompensation: UIEdgeInsets = .zero
 
     override func viewDidLoad() {
