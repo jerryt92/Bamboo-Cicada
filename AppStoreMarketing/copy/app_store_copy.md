@@ -3,7 +3,7 @@
 ## 中文
 
 ### 名称
-竹知了 - 民间声玩
+竹知了: 中华民间声玩
 
 ### 副标题
 轻轻摇动，听见一声夏天
@@ -40,7 +40,7 @@
 ## English
 
 ### Name
-Bamboo Cicada - Folk Sound Toy
+Bamboo Cicada: Chinese Folk Sound Toy
 
 ### Subtitle
 Shake gently, hear a small summer

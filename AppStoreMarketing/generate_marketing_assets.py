@@ -12,7 +12,7 @@ PROJECT = ROOT.parent
 SOURCE = ROOT / "source-screenshots"
 OUT = ROOT / "screenshots" / "iphone-17-pro-max"
 PREVIEWS = ROOT / "previews"
-WEB_ASSETS = PROJECT / "bamboo-cicada.github.io" / "assets"
+WEB_ASSETS = PROJECT / "zhuzhiliao" / "assets"
 
 PHONE_W, PHONE_H = 1320, 2868
 SOCIAL_W, SOCIAL_H = 1600, 900
@@ -133,7 +133,7 @@ def make_screenshot(filename: str, lang: str, title: str, subtitle: str, source_
     subtitle_font = font(ZH_FONT if lang == "zh" else TEXT_FONT, 42)
     feature_font = font(ZH_FONT if lang == "zh" else TEXT_FONT, 32)
 
-    d.text((92, 112), "Bamboo Cicada", font=font(SERIF_FONT, 38), fill=(255, 239, 184, 235))
+    d.text((92, 112), "Bamboo Cicada: Chinese Folk Sound Toy", font=font(SERIF_FONT, 32), fill=(255, 239, 184, 235))
     y = draw_wrapped(d, title, (88, 184), 980, title_font, (255, 246, 220), line_gap=20)
     y = draw_wrapped(d, subtitle, (92, y + 26), 900, subtitle_font, (255, 235, 184), line_gap=10)
 
@@ -157,8 +157,8 @@ def make_screenshot(filename: str, lang: str, title: str, subtitle: str, source_
 def make_social_cards() -> None:
     base = cover(Image.open(WEB_ASSETS / "hero-promo-base.png"), (SOCIAL_W, SOCIAL_H)).convert("RGBA")
     for lang, filename, title, subtitle, cta in [
-        ("zh", "promo-social-zh.png", "竹知了", "把中华传统声玩装进 iPhone", "震动反馈 · 鸣蝉声 · 竹林童玩"),
-        ("en", "promo-social-en.png", "Bamboo Cicada", "A Chinese folk sound toy for iPhone", "Haptics · Cicada sound · Bamboo forest play"),
+        ("zh", "promo-social-zh.png", "竹知了: 中华民间声玩", "把中华民间声玩装进 iPhone", "震动反馈 · 鸣蝉声 · 竹林童玩"),
+        ("en", "promo-social-en.png", "Bamboo Cicada: Chinese Folk Sound Toy", "A Chinese folk sound toy for iPhone", "Haptics · Cicada sound · Bamboo forest play"),
     ]:
         img = base.copy()
         shade = Image.new("RGBA", img.size, (0, 0, 0, 0))
@@ -166,11 +166,11 @@ def make_social_cards() -> None:
         sd.rectangle((780, 0, SOCIAL_W, SOCIAL_H), fill=(8, 35, 25, 138))
         img = Image.alpha_composite(img, shade)
         d = ImageDraw.Draw(img)
-        title_font = font(ZH_FONT if lang == "zh" else SERIF_FONT, 104 if lang == "zh" else 90)
+        title_font = font(ZH_FONT if lang == "zh" else SERIF_FONT, 64 if lang == "zh" else 58)
         sub_font = font(ZH_FONT if lang == "zh" else TEXT_FONT, 50 if lang == "zh" else 44)
         cta_font = font(ZH_FONT if lang == "zh" else TEXT_FONT, 32)
-        d.text((860, 236), title, font=title_font, fill=(255, 245, 210))
-        draw_wrapped(d, subtitle, (864, 372), 560, sub_font, (255, 230, 165), line_gap=12)
+        y = draw_wrapped(d, title, (860, 226), 620, title_font, (255, 245, 210), line_gap=10)
+        draw_wrapped(d, subtitle, (864, y + 32), 560, sub_font, (255, 230, 165), line_gap=12)
         d.rounded_rectangle((864, 590, 1464, 674), radius=42, fill=(174, 32, 26, 236))
         d.text((906, 614), cta, font=cta_font, fill=(255, 246, 220))
         img.save(WEB_ASSETS / filename)
@@ -191,7 +191,7 @@ def main() -> None:
     WEB_ASSETS.mkdir(parents=True, exist_ok=True)
 
     zh = [
-        make_screenshot("zh_01_摇一摇听见夏天.png", "zh", "摇一摇，听见夏天", "竹林里的竹知了随手势旋转，发出近似鸣蝉的声音。", "game-zh.png", "red", "中华传统声玩"),
+        make_screenshot("zh_01_摇一摇听见夏天.png", "zh", "摇一摇，听见夏天", "竹林里的竹知了随手势旋转，发出近似鸣蝉的声音。", "game-zh.png", "red", "中华民间声玩"),
         make_screenshot("zh_02_震动反馈跟随节奏.png", "zh", "震动反馈跟随节奏", "启动、旋转、加速，每一次节奏都有轻巧触感。", "game-zh.png", "red", "Haptic Feedback"),
         make_screenshot("zh_03_中华传统民间童玩.png", "zh", "中华传统民间童玩", "竹、纸、细绳，把手上的节奏变成夏日声响。", "toy-closeup.png", "red", "竹知了 · Bamboo Cicada"),
         make_screenshot("zh_04_卷轴中的文化介绍.png", "zh", "卷轴中的文化介绍", "了解竹知了的材料、玩法和朴素巧思。", "intro-zh.png", "red", "民间童玩介绍"),
