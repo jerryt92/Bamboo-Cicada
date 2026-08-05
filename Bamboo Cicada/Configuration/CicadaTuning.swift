@@ -7,7 +7,7 @@ import Foundation
 
 enum CicadaTuning {
     // 刚性绳圆周运动每帧允许的最大角速度。越大，竹知了沿圆弧甩得越快。
-    static var maximumSpinVelocityDegreesPerFrame = 19.0
+    static var maximumSpinVelocityDegreesPerFrame = 20.0
 
     // 屏幕“台球桌”平面内的重力响应。越大，倾斜手机时知了越快滑向重力下垂方向。
     static var ropeGravityResponse = 0.62
