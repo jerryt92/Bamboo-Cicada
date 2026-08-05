@@ -89,37 +89,17 @@ final class CicadaBuzzer: ObservableObject {
         let warmCount = CicadaTuning.audioPrewarmPlayerCount
         audioQueue.async { [weak self] in
             guard let self, self.isRunning else { return }
-            let warmPlayers = Array(self.players.prefix(warmCount))
-            for player in warmPlayers {
-                player.volume = 0
+            for player in self.players.prefix(warmCount) {
+                player.stop()
                 player.currentTime = 0
-                player.play()
-            }
-
-            self.audioQueue.asyncAfter(deadline: .now() + CicadaTuning.audioPrewarmDuration) { [weak self] in
-                guard let self, self.isRunning else { return }
-                for player in warmPlayers {
-                    player.stop()
-                    player.currentTime = 0
-                    player.volume = 1
-                    player.prepareToPlay()
-                }
+                player.volume = 1
+                player.prepareToPlay()
             }
         }
     }
 
     func ensureAudioIsWarm() {
         prewarmAudioHardware()
-    }
-
-    private func resetPlayersAfterWarmupIfNeeded() {
-        guard hasPrewarmedAudioHardware else { return }
-        for player in players where player.volume == 0 {
-            player.stop()
-            player.currentTime = 0
-            player.volume = 1
-            player.prepareToPlay()
-        }
     }
 
     func stop() {
@@ -166,7 +146,6 @@ final class CicadaBuzzer: ObservableObject {
 
     private func playPulseOnAudioQueue(rate: Double) {
         guard isRunning, let playerIndex = nextAvailablePlayerIndex() else { return }
-        resetPlayersAfterWarmupIfNeeded()
 
         let player = players[playerIndex]
         let playbackRate = clampedPlaybackRate(rate)

@@ -174,7 +174,7 @@ angularVelocity += tangentialForce * ropeGravityResponse
 - `frictionHapticPhaseDegrees`：摩擦触感相位间隔。
 - `frictionHapticMinimumIntensity` / `frictionHapticSpeedMultiplier`：摩擦触感强度映射。
 - `hapticMinimumInterval`：触感脉冲的最小间隔。
-- `audioPrewarmDuration` / `audioPrewarmPlayerCount`：启动时音频预热配置。
+- `audioPrewarmPlayerCount`：启动时 prepare 的播放器数量；预热不播放音频，确保冷启动静音。
 
 ## 营销素材
 

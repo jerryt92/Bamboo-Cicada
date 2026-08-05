@@ -174,7 +174,7 @@ Most interaction feel lives in `Bamboo Cicada/Configuration/CicadaTuning.swift`.
 - `frictionHapticPhaseDegrees`: friction haptic phase interval.
 - `frictionHapticMinimumIntensity` / `frictionHapticSpeedMultiplier`: friction haptic intensity mapping.
 - `hapticMinimumInterval`: minimum spacing between haptic pulses.
-- `audioPrewarmDuration` / `audioPrewarmPlayerCount`: startup audio prewarm settings.
+- `audioPrewarmPlayerCount`: number of players prepared at startup; prewarm does not play audio, keeping cold launch silent.
 
 ## Marketing Assets
 
