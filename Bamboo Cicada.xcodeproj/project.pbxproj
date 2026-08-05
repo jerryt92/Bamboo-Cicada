@@ -404,7 +404,9 @@
 				ENABLE_ON_DEMAND_RESOURCES = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BambooCicada-Info.plist;
+				INFOPLIST_KEY_CADisableMinimumFrameDurationOnPhone = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "竹知了";
 				INFOPLIST_KEY_GCSupportsGameMode = NO;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
@@ -457,7 +459,9 @@
 				ENABLE_ON_DEMAND_RESOURCES = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = BambooCicada-Info.plist;
+				INFOPLIST_KEY_CADisableMinimumFrameDurationOnPhone = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "竹知了";
 				INFOPLIST_KEY_GCSupportsGameMode = NO;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;

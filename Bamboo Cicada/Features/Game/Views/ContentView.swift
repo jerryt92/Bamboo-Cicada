@@ -21,7 +21,7 @@ struct ContentView: View {
     @State private var isShowingIntroduction = false
     @State private var isGameRunning = false
     @State private var windowSize: CGSize = .zero
-    private let frameTimer = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
+    @StateObject private var displayLink = DisplayLinkDriver()
 
     private var language: AppLanguage {
         AppLanguage(locale: locale)
@@ -95,9 +95,9 @@ struct ContentView: View {
                 startGame(wakeHaptics: false)
             }
         }
-        .onReceive(frameTimer) { _ in
+        .onReceive(displayLink.$tick) { _ in
             guard isGameRunning else { return }
-            motion.settleMotion()
+            motion.settleMotion(frameInterval: displayLink.frameInterval)
             buzzer.syncMotion(rate: motion.audioPlaybackRate, isMoving: motion.spinSpeedRatio > 0)
             if motion.spinStartPulseID != lastStartPulseID {
                 lastStartPulseID = motion.spinStartPulseID
@@ -141,6 +141,7 @@ struct ContentView: View {
         buzzer.start()
         buzzer.ensureAudioIsWarm()
         motion.start()
+        displayLink.start()
         haptics.resume()
         if wakeHaptics {
             haptics.wake()
@@ -151,6 +152,7 @@ struct ContentView: View {
     private func stopGame() {
         guard isGameRunning else { return }
         isGameRunning = false
+        displayLink.stop()
         motion.stop()
         buzzer.stop()
         haptics.reset()
@@ -160,6 +162,7 @@ struct ContentView: View {
     private func pauseGameForPresentation() {
         guard isGameRunning else { return }
         isGameRunning = false
+        displayLink.stop()
         motion.stop()
         buzzer.pauseForPresentation()
         haptics.suspend()
@@ -170,5 +173,42 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+@MainActor
+private final class DisplayLinkDriver: NSObject, ObservableObject {
+    @Published private(set) var tick = 0
+    @Published private(set) var frameInterval: TimeInterval = 1.0 / CicadaTuning.framesPerSecond
+
+    private var displayLink: CADisplayLink?
+
+    func start() {
+        guard displayLink == nil else { return }
+
+        let displayLink = CADisplayLink(target: self, selector: #selector(didRefresh(_:)))
+        let maximumRate = Float(UIScreen.main.maximumFramesPerSecond)
+        displayLink.preferredFrameRateRange = CAFrameRateRange(
+            minimum: min(60, maximumRate),
+            maximum: maximumRate,
+            preferred: maximumRate
+        )
+        displayLink.add(to: .main, forMode: .common)
+        self.displayLink = displayLink
+    }
+
+    func stop() {
+        displayLink?.invalidate()
+        displayLink = nil
+    }
+
+    deinit {
+        displayLink?.invalidate()
+    }
+
+    @objc private func didRefresh(_ displayLink: CADisplayLink) {
+        let interval = displayLink.targetTimestamp - displayLink.timestamp
+        frameInterval = interval > 0 ? interval : 1.0 / CicadaTuning.framesPerSecond
+        tick += 1
     }
 }

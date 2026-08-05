@@ -126,14 +126,15 @@ final class CicadaMotionController: ObservableObject {
         rotationPeriod = 1.5
     }
 
-    func settleMotion() {
-        shakeIntensity = shakeIntensity * 0.82 + rawIntensity * 0.18
-        sway = sway * 0.78 + rawSway * 0.22
+    func settleMotion(frameInterval: TimeInterval) {
+        let frameScale = normalizedFrameScale(for: frameInterval)
+        shakeIntensity += (rawIntensity - shakeIntensity) * interpolationRatio(baseRatio: 0.18, frameScale: frameScale)
+        sway += (rawSway - sway) * interpolationRatio(baseRatio: 0.22, frameScale: frameScale)
 
         let maximumVelocity = CicadaTuning.maximumSpinVelocityDegreesPerFrame
         let previousAngularVelocity = angularVelocity
-        updateSmoothedMotionInput()
-        updateHighSpeedBlend()
+        updateSmoothedMotionInput(frameScale: frameScale)
+        updateHighSpeedBlend(frameScale: frameScale)
         let force = tablePlaneForceComponents(highSpeedBlendRatio: highSpeedBlendRatio)
         let gravityTangentialForce = CicadaRestOrientation.tangentialForce(
             angleDegrees: orbitAngle,
@@ -149,7 +150,7 @@ final class CicadaMotionController: ObservableObject {
         // 刚性绳约束：重力先决定自然运动方向；加速度只沿既有方向追加能量。
         let gravityDrivenVelocity = CicadaSpinDirection.velocityAfterGravity(
             baseVelocity: angularVelocity,
-            gravityDelta: gravityTangentialForce * CicadaTuning.ropeGravityResponse,
+            gravityDelta: gravityTangentialForce * CicadaTuning.ropeGravityResponse * frameScale,
             lockedDirection: highSpeedSpinDirection
         )
         highSpeedSpinDirection = CicadaSpinDirection.lockedDirection(
@@ -159,13 +160,13 @@ final class CicadaMotionController: ObservableObject {
         )
         angularVelocity = CicadaSpinDirection.velocityAfterAcceleration(
             baseVelocity: gravityDrivenVelocity,
-            accelerationDelta: accelerationTangentialForce * CicadaTuning.ropeGravityResponse,
+            accelerationDelta: accelerationTangentialForce * CicadaTuning.ropeGravityResponse * frameScale,
             lockedDirection: highSpeedSpinDirection
         )
-        applyHighSpeedSpinDrive(maximumVelocity: maximumVelocity)
-        angularVelocity *= CicadaTuning.ropeAngularDamping
+        applyHighSpeedSpinDrive(maximumVelocity: maximumVelocity, frameScale: frameScale)
+        angularVelocity *= pow(CicadaTuning.ropeAngularDamping, frameScale)
         let velocityDelta = angularVelocity - previousAngularVelocity
-        let maximumDelta = CicadaTuning.maximumAngularVelocityDeltaPerFrame
+        let maximumDelta = CicadaTuning.maximumAngularVelocityDeltaPerFrame * frameScale
         if velocityDelta > maximumDelta {
             angularVelocity = previousAngularVelocity + maximumDelta
         } else if velocityDelta < -maximumDelta {
@@ -173,7 +174,7 @@ final class CicadaMotionController: ObservableObject {
         }
         angularVelocity = min(maximumVelocity, max(-maximumVelocity, angularVelocity))
 
-        orbitAngle += angularVelocity
+        orbitAngle += angularVelocity * frameScale
 
         let effectiveAngularSpeed = abs(angularVelocity) < CicadaTuning.ropeAudioVelocityDeadzone
             ? 0
@@ -186,21 +187,36 @@ final class CicadaMotionController: ObservableObject {
             audioPulsePeriod = max(CicadaTuning.minimumAudioPulsePeriod, CicadaTuning.audioPhaseDegrees / (effectiveAngularSpeed * CicadaTuning.framesPerSecond))
         }
 
-        updateMotionPulses(effectiveAngularSpeed: effectiveAngularSpeed)
-        updateFrictionHaptics(angularSpeed: abs(angularVelocity), maximumVelocity: maximumVelocity)
-        rawIntensity *= 0.94
-        rawSway *= 0.94
+        updateMotionPulses(effectiveAngularSpeed: effectiveAngularSpeed * frameScale)
+        updateFrictionHaptics(
+            angularSpeed: abs(angularVelocity) * frameScale,
+            maximumVelocity: maximumVelocity * frameScale
+        )
+        rawIntensity *= pow(0.94, frameScale)
+        rawSway *= pow(0.94, frameScale)
     }
 
-    private func updateSmoothedMotionInput() {
-        let smoothing = max(0, min(1, CicadaTuning.motionInputSmoothing))
+    private func normalizedFrameScale(for frameInterval: TimeInterval) -> Double {
+        let referenceInterval = 1.0 / CicadaTuning.framesPerSecond
+        return min(2, max(0.25, frameInterval / referenceInterval))
+    }
+
+    private func interpolationRatio(baseRatio: Double, frameScale: Double) -> Double {
+        1 - pow(1 - baseRatio, frameScale)
+    }
+
+    private func updateSmoothedMotionInput(frameScale: Double) {
+        let smoothing = interpolationRatio(
+            baseRatio: max(0, min(1, CicadaTuning.motionInputSmoothing)),
+            frameScale: frameScale
+        )
         smoothedGravityX += (gravityX - smoothedGravityX) * smoothing
         smoothedGravityY += (gravityY - smoothedGravityY) * smoothing
         smoothedAccelerationX += (accelerationX - smoothedAccelerationX) * smoothing
         smoothedAccelerationY += (accelerationY - smoothedAccelerationY) * smoothing
     }
 
-    private func updateHighSpeedBlend() {
+    private func updateHighSpeedBlend(frameScale: Double) {
         let start = CicadaTuning.highSpeedBlendStartIntensity
         let end = max(start + 0.001, CicadaTuning.highSpeedBlendEndIntensity)
         let normalizedIntensity = min(1, max(0, (shakeIntensity - start) / (end - start)))
@@ -208,16 +224,22 @@ final class CicadaMotionController: ObservableObject {
         if rawIntensity >= end {
             highSpeedBlendRatio = max(highSpeedBlendRatio, CicadaTuning.highSpeedBlendKickstartRatio)
         }
-        highSpeedBlendRatio += (smoothTarget - highSpeedBlendRatio) * CicadaTuning.highSpeedBlendSmoothing
+        highSpeedBlendRatio += (smoothTarget - highSpeedBlendRatio) * interpolationRatio(
+            baseRatio: CicadaTuning.highSpeedBlendSmoothing,
+            frameScale: frameScale
+        )
     }
 
-    private func applyHighSpeedSpinDrive(maximumVelocity: Double) {
+    private func applyHighSpeedSpinDrive(maximumVelocity: Double, frameScale: Double) {
         guard let direction = highSpeedSpinDirection else { return }
 
         // 高速区不是重置速度，而是把已有角速度平滑拉向同方向目标速度，保留进入瞬间的惯性。
         let targetSpeedRatio = pow(highSpeedBlendRatio, 0.72)
         let targetVelocity = direction * maximumVelocity * targetSpeedRatio
-        let response = CicadaTuning.highSpeedSpinDriveResponse * highSpeedBlendRatio
+        let response = interpolationRatio(
+            baseRatio: CicadaTuning.highSpeedSpinDriveResponse * highSpeedBlendRatio,
+            frameScale: frameScale
+        )
         angularVelocity += (targetVelocity - angularVelocity) * response
     }
 
