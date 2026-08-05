@@ -65,7 +65,7 @@ Bamboo Cicada/
   *.lproj/                Localized Info.plist strings
 
 AppStoreMarketing/        App Store copy, source screenshots, and generator
-bamboo-cicada.github.io/  Website screenshot assets
+zhuzhiliao/               Website pages and screenshot assets
 Bamboo CicadaTests/       Unit tests
 Bamboo CicadaUITests/     UI tests
 ```

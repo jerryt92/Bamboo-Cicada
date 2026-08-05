@@ -65,7 +65,7 @@ Bamboo Cicada/
   *.lproj/                本地化 Info.plist 字符串
 
 AppStoreMarketing/        App Store 文案、源截图和生成脚本
-bamboo-cicada.github.io/  官网截图素材
+zhuzhiliao/               官网页面和截图素材
 Bamboo CicadaTests/       单元测试
 Bamboo CicadaUITests/     UI 测试
 ```
