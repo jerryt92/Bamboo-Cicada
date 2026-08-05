@@ -187,11 +187,11 @@ private final class DisplayLinkDriver: NSObject, ObservableObject {
         guard displayLink == nil else { return }
 
         let displayLink = CADisplayLink(target: self, selector: #selector(didRefresh(_:)))
-        let maximumRate = Float(UIScreen.main.maximumFramesPerSecond)
+        // 主页锁定 120 帧，不做设备自适应。
         displayLink.preferredFrameRateRange = CAFrameRateRange(
-            minimum: min(60, maximumRate),
-            maximum: maximumRate,
-            preferred: maximumRate
+            minimum: 120,
+            maximum: 120,
+            preferred: 120
         )
         displayLink.add(to: .main, forMode: .common)
         self.displayLink = displayLink
