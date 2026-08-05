@@ -15,7 +15,6 @@ PREVIEWS = ROOT / "previews"
 WEB_ASSETS = PROJECT / "zhuzhiliao" / "assets"
 
 IPHONE_SIZE = (1242, 2688)
-IPAD_SIZE = (2048, 2732)
 IPHONE_MOCKUP_RATIO = 1320 / 2868
 SOCIAL_W, SOCIAL_H = 1600, 900
 
@@ -212,9 +211,7 @@ def make_contact_sheet(images: list[Image.Image], filename: str, source_size: tu
 
 def main() -> None:
     iphone_dir = SCREENSHOTS / "iphone-6.5"
-    ipad_dir = SCREENSHOTS / "ipad-13"
     iphone_dir.mkdir(parents=True, exist_ok=True)
-    ipad_dir.mkdir(parents=True, exist_ok=True)
     PREVIEWS.mkdir(parents=True, exist_ok=True)
     WEB_ASSETS.mkdir(parents=True, exist_ok=True)
 
@@ -228,14 +225,11 @@ def main() -> None:
     ]
 
     generated: dict[tuple[str, str], Image.Image] = {}
-    for output_dir, size, device in [(iphone_dir, IPHONE_SIZE, "iphone"), (ipad_dir, IPAD_SIZE, "ipad")]:
-        for filename, lang, title, subtitle, source_name, feature in specs:
-            generated[(device, filename)] = make_screenshot(output_dir, size, filename, lang, title, subtitle, source_name, feature)
+    for filename, lang, title, subtitle, source_name, feature in specs:
+        generated[("iphone", filename)] = make_screenshot(iphone_dir, IPHONE_SIZE, filename, lang, title, subtitle, source_name, feature)
 
     make_contact_sheet([generated[("iphone", s[0])] for s in specs[:3]], "iphone-6.5_zh_contact_sheet.png", IPHONE_SIZE)
     make_contact_sheet([generated[("iphone", s[0])] for s in specs[3:]], "iphone-6.5_en_contact_sheet.png", IPHONE_SIZE)
-    make_contact_sheet([generated[("ipad", s[0])] for s in specs[:3]], "ipad-13_zh_contact_sheet.png", IPAD_SIZE)
-    make_contact_sheet([generated[("ipad", s[0])] for s in specs[3:]], "ipad-13_en_contact_sheet.png", IPAD_SIZE)
 
     for src, dst in [
         ("zh_01_摇一摇听见夏天.png", "screenshot-zh-shake.png"),

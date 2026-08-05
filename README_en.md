@@ -2,7 +2,7 @@
 
 Language: [中文](README.md) | English
 
-Bamboo Cicada is a small SwiftUI iOS app that recreates the traditional Chinese folk sound toy "竹知了" on a phone or iPad. Shake the device gently and the bamboo cicada spins, buzzes, and taps back through haptics like a handheld summer toy.
+Bamboo Cicada is a small SwiftUI iOS app that recreates the traditional Chinese folk sound toy "竹知了" on a iPhone. Shake the device gently and the bamboo cicada spins, buzzes, and taps back through haptics like a handheld summer toy.
 
 ## Features
 
@@ -11,14 +11,14 @@ Bamboo Cicada is a small SwiftUI iOS app that recreates the traditional Chinese 
 - Low-latency buzzing audio synchronized with the swing phase.
 - UIKit haptic feedback that follows shake intensity and spin speed.
 - Full-screen introduction and about screens.
-- In-app Chinese / English switching, with Chinese as the default.
+- Introduction and about copy localized in Simplified Chinese, Traditional Chinese, English, Japanese, Korean, and French.
 - App Store marketing asset workflow for bilingual screenshots and copy.
 
 ## Requirements
 
 - Xcode 16 or later
 - iOS 17.6 or later
-- A physical iPhone or iPad is recommended for motion, audio, and haptic testing
+- A physical iPhone is recommended for motion, audio, and haptic testing
 
 The app can build and run in Simulator, but the main interaction is designed around real device motion.
 
@@ -26,7 +26,7 @@ The app can build and run in Simulator, but the main interaction is designed aro
 
 1. Open `Bamboo Cicada.xcodeproj` in Xcode.
 2. Select the `Bamboo Cicada` scheme.
-3. Choose a physical iOS device.
+3. Choose a physical iPhone.
 4. Build and run.
 
 Command-line build:
