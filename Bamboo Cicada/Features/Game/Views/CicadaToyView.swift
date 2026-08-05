@@ -35,9 +35,9 @@ struct CicadaToyView: View {
             )
 
             ZStack {
-                bambooStick(height: height, center: center)
-
                 cord(from: center, to: cordAttachment)
+
+                bambooStick(height: height, center: center)
 
                 cicadaBody(x: cicadaCenter.x, y: cicadaCenter.y, rotation: bodyRotation, scale: cicadaScale)
 
@@ -91,15 +91,6 @@ struct CicadaToyView: View {
                     .fill(.red)
                     .frame(width: 32, height: 32)
             }
-            Circle()
-                .fill(.red)
-                .frame(width: 15, height: 15)
-                .overlay {
-                    Circle()
-                        .fill(.white.opacity(0.4))
-                        .frame(width: 5, height: 5)
-                        .offset(x: -2, y: -2)
-                }
         }
         .overlay {
             VStack(spacing: 22) {
