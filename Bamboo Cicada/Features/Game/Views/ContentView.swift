@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var lastAudioPulseID = 0
     @State private var lastStartPulseID = 0
     @State private var isShowingIntroduction = false
+    @State private var isGameRunning = false
     @State private var windowSize: CGSize = .zero
     private let frameTimer = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
 
@@ -47,21 +48,7 @@ struct ContentView: View {
                     .frame(width: 0, height: 0)
             }
             .overlay(alignment: .topTrailing) {
-                Button {
-                    isShowingIntroduction = true
-                } label: {
-                    Image(systemName: "line.3.horizontal")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(Color(red: 0.16, green: 0.11, blue: 0.07))
-                        .frame(width: 44, height: 44)
-                        .background(.ultraThinMaterial, in: Circle())
-                        .overlay {
-                            Circle()
-                                .stroke(Color(red: 0.98, green: 0.85, blue: 0.46).opacity(0.45), lineWidth: 1)
-                        }
-                        .shadow(color: .black.opacity(0.22), radius: 12, y: 6)
-                }
-                .accessibilityLabel(language.introductionButtonAccessibility)
+                introductionButton
                 .padding(.top, 28)
                 .padding(.trailing, 18)
             }
@@ -78,28 +65,27 @@ struct ContentView: View {
             .presentationBackground(.clear)
         }
         .onAppear {
-            lastAudioPulseID = 0
-            lastStartPulseID = 0
-            UIApplication.shared.isIdleTimerDisabled = true
-            motion.start()
-            buzzer.start()
-            haptics.prepare()
-            haptics.wake()
+            startGame(wakeHaptics: true)
         }
         .onDisappear {
-            motion.stop()
-            buzzer.stop()
-            haptics.reset()
-            UIApplication.shared.isIdleTimerDisabled = false
+            stopGame()
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
+            if phase == .active, !isShowingIntroduction {
                 UIApplication.shared.isIdleTimerDisabled = true
                 buzzer.restoreAudioSession()
                 haptics.prepare()
             }
         }
+        .onChange(of: isShowingIntroduction) { _, isPresented in
+            if isPresented {
+                stopGame()
+            } else {
+                startGame(wakeHaptics: false)
+            }
+        }
         .onReceive(frameTimer) { _ in
+            guard isGameRunning else { return }
             motion.settleMotion()
             buzzer.syncMotion(rate: motion.audioPlaybackRate, isMoving: motion.spinSpeedRatio > 0)
             if motion.spinStartPulseID != lastStartPulseID {
@@ -115,6 +101,47 @@ struct ContentView: View {
                 buzzer.playPulses(count: pulseCount, rate: motion.audioPlaybackRate)
             }
         }
+    }
+
+    @ViewBuilder
+    private var introductionButton: some View {
+        let button = Button {
+            isShowingIntroduction = true
+        } label: {
+            Image(systemName: "line.3.horizontal")
+        }
+        .buttonBorderShape(.circle)
+        .controlSize(.large)
+        .accessibilityLabel(language.introductionButtonAccessibility)
+
+        if #available(iOS 26.0, *) {
+            button.buttonStyle(.glass)
+        } else {
+            button.buttonStyle(.bordered)
+        }
+    }
+
+    private func startGame(wakeHaptics: Bool) {
+        guard !isGameRunning else { return }
+        lastAudioPulseID = 0
+        lastStartPulseID = 0
+        UIApplication.shared.isIdleTimerDisabled = true
+        motion.start()
+        buzzer.start()
+        haptics.prepare()
+        if wakeHaptics {
+            haptics.wake()
+        }
+        isGameRunning = true
+    }
+
+    private func stopGame() {
+        guard isGameRunning else { return }
+        motion.stop()
+        buzzer.stop()
+        haptics.reset()
+        UIApplication.shared.isIdleTimerDisabled = false
+        isGameRunning = false
     }
 }
 
