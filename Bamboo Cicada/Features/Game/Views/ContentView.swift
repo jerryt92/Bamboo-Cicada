@@ -27,32 +27,42 @@ struct ContentView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            let canvasSize = windowSize == .zero ? proxy.size : windowSize
+        NavigationStack {
+            GeometryReader { proxy in
+                let canvasSize = windowSize == .zero ? proxy.size : windowSize
 
-            ZStack {
-                BambooForestBackground(activity: motion.shakeIntensity)
+                ZStack {
+                    BambooForestBackground(activity: motion.shakeIntensity)
+                        .frame(width: canvasSize.width, height: canvasSize.height)
+                        .position(x: canvasSize.width * 0.5, y: canvasSize.height * 0.5)
+
+                    CicadaToyView(
+                        orbitAngle: motion.orbitAngle,
+                        spinSpeedRatio: motion.spinSpeedRatio,
+                        wingSpread: motion.wingSpread,
+                        buzzLevel: motion.shakeIntensity
+                    )
                     .frame(width: canvasSize.width, height: canvasSize.height)
                     .position(x: canvasSize.width * 0.5, y: canvasSize.height * 0.5)
 
-                CicadaToyView(
-                    orbitAngle: motion.orbitAngle,
-                    spinSpeedRatio: motion.spinSpeedRatio,
-                    wingSpread: motion.wingSpread,
-                    buzzLevel: motion.shakeIntensity
-                )
+                    WindowBoundsReader(size: $windowSize)
+                        .frame(width: 0, height: 0)
+                }
                 .frame(width: canvasSize.width, height: canvasSize.height)
-                .position(x: canvasSize.width * 0.5, y: canvasSize.height * 0.5)
-
-                WindowBoundsReader(size: $windowSize)
-                    .frame(width: 0, height: 0)
+                .ignoresSafeArea(.all)
             }
-            .overlay(alignment: .topTrailing) {
-                introductionButton
-                .padding(.top, 28)
-                .padding(.trailing, 18)
+            .ignoresSafeArea(.all)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        isShowingIntroduction = true
+                    } label: {
+                        Image(systemName: "line.3.horizontal")
+                    }
+                    .accessibilityLabel(language.introductionButtonAccessibility)
+                }
             }
-            .frame(width: canvasSize.width, height: canvasSize.height)
+            .toolbarBackground(.hidden, for: .navigationBar)
         }
         .background(Color(red: 0.08, green: 0.25, blue: 0.17))
         .ignoresSafeArea(.all)
@@ -100,24 +110,6 @@ struct ContentView: View {
                 haptics.phasePulse(intensity: motion.shakeIntensity, speedRatio: motion.spinSpeedRatio, count: pulseCount)
                 buzzer.playPulses(count: pulseCount, rate: motion.audioPlaybackRate)
             }
-        }
-    }
-
-    @ViewBuilder
-    private var introductionButton: some View {
-        let button = Button {
-            isShowingIntroduction = true
-        } label: {
-            Image(systemName: "line.3.horizontal")
-        }
-        .buttonBorderShape(.circle)
-        .controlSize(.large)
-        .accessibilityLabel(language.introductionButtonAccessibility)
-
-        if #available(iOS 26.0, *) {
-            button.buttonStyle(.glass)
-        } else {
-            button.buttonStyle(.bordered)
         }
     }
 
