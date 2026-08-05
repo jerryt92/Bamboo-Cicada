@@ -7,6 +7,13 @@ import SwiftUI
 import UIKit
 
 struct ScrollPaperBackground: View {
+    private static let cachedScrollImage: UIImage? = {
+        guard let url = Bundle.main.url(forResource: "ChineseScrollBackground", withExtension: "png") else {
+            return nil
+        }
+        return UIImage(contentsOfFile: url.path)
+    }()
+
     var body: some View {
         GeometryReader { proxy in
             scrollImage
@@ -39,8 +46,7 @@ struct ScrollPaperBackground: View {
 
     @ViewBuilder
     private var scrollImage: some View {
-        if let url = Bundle.main.url(forResource: "ChineseScrollBackground", withExtension: "png"),
-           let image = UIImage(contentsOfFile: url.path) {
+        if let image = Self.cachedScrollImage {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFill()

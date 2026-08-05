@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="640" viewBox="0 0 1120 640" role="img" aria-labelledby="title desc">
+  <title id="title">Rigid rope physics diagram</title>
+  <desc id="desc">A fixed anchor, rigid rope, circular orbit, tangent force, radial constraint, and bamboo cicada body on a phone screen plane.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#2c6f68"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#d36b35"/>
+    </marker>
+    <style>
+      .bg{fill:#f8f5ee}.panel{fill:#fffdfa;stroke:#d8ccb9;stroke-width:2}.grid{stroke:#e9dfd0;stroke-width:1}.rope{stroke:#8a5b2e;stroke-width:8;stroke-linecap:round}.orbit{fill:none;stroke:#b9d4cf;stroke-width:4;stroke-dasharray:10 10}.force{stroke:#2c6f68;stroke-width:5;marker-end:url(#arrow)}.force2{stroke:#d36b35;stroke-width:5;marker-end:url(#arrowOrange)}.label{font:600 24px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#26332f}.small{font:500 17px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#4a5a54}.code{font:600 18px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#5b4b3b}.caption{font:700 22px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#26332f}
+    </style>
+  </defs>
+  <rect class="bg" width="1120" height="640"/>
+  <text class="caption" x="70" y="52">刚性绳约束 / Rigid-rope constraint</text>
+  <rect class="panel" x="70" y="78" width="980" height="430" rx="8"/>
+  <path class="grid" d="M70 185H1050M70 292H1050M70 399H1050M266 78V508M462 78V508M658 78V508M854 78V508"/>
+  <circle class="orbit" cx="548" cy="180" r="190"/>
+  <line class="rope" x1="548" y1="180" x2="690" y2="336"/>
+  <circle cx="548" cy="180" r="20" fill="#b94235" stroke="#6f231d" stroke-width="4"/>
+  <ellipse cx="690" cy="336" rx="58" ry="86" transform="rotate(-38 690 336)" fill="#b87a32" stroke="#6b411e" stroke-width="5"/>
+  <ellipse cx="663" cy="315" rx="19" ry="45" transform="rotate(-38 663 315)" fill="#d6a157" opacity=".8"/>
+  <ellipse cx="719" cy="357" rx="19" ry="45" transform="rotate(-38 719 357)" fill="#d6a157" opacity=".8"/>
+  <line class="force" x1="690" y1="336" x2="585" y2="432"/>
+  <line class="force2" x1="690" y1="336" x2="795" y2="432"/>
+  <line x1="690" y1="336" x2="548" y2="180" stroke="#7a6b59" stroke-width="2" stroke-dasharray="8 8"/>
+  <text class="label" x="386" y="128">固定挂点 / Anchor</text>
+  <text class="small" x="590" y="246">固定绳长 r</text>
+  <text class="small" x="590" y="272">Fixed rope length</text>
+  <text class="label" x="290" y="462">切向力改变角速度</text>
+  <text class="small" x="290" y="489">Tangential force changes angular velocity</text>
+  <text class="label" x="760" y="462">径向力被绳约束</text>
+  <text class="small" x="760" y="489">Radial force is constrained</text>
+  <rect x="70" y="538" width="980" height="58" rx="8" fill="#fffdf7" stroke="#d8ccb9" stroke-width="2"/>
+  <text class="code" x="104" y="574">position = anchor + unit(angle) * ropeLength</text>
+</svg>

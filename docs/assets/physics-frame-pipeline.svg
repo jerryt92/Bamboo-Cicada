@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="520" viewBox="0 0 1120 520" role="img" aria-labelledby="title desc">
+  <title id="title">Frame physics update pipeline</title>
+  <desc id="desc">Core Motion input flows through smoothing, force mapping, tangent projection, angular velocity integration, damping, clamping, drawing, audio, and haptics.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#365f6b"/>
+    </marker>
+    <style>
+      .bg{fill:#f7f3ea}.node{fill:#fffdf7;stroke:#cdbf9f;stroke-width:2}.node2{fill:#edf6f3;stroke:#74a99e;stroke-width:2}.node3{fill:#fff1e8;stroke:#d58a55;stroke-width:2}.line{stroke:#365f6b;stroke-width:4;fill:none;marker-end:url(#arrow)}.title{font:700 24px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#26332f}.label{font:600 19px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#27342f}.sub{font:500 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#53615c}
+    </style>
+  </defs>
+  <rect class="bg" width="1120" height="520"/>
+  <text class="title" x="54" y="56">每帧物理更新 / Per-frame physics update</text>
+  <g transform="translate(54 98)">
+    <rect class="node" x="0" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="20" y="34">Core Motion</text>
+    <text class="sub" x="20" y="61">gravity + acceleration</text>
+    <path class="line" d="M154 43H206"/>
+    <rect class="node2" x="218" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="238" y="34">低通平滑</text>
+    <text class="sub" x="238" y="61">low-pass filter</text>
+    <path class="line" d="M372 43H424"/>
+    <rect class="node" x="436" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="456" y="34">平面合力</text>
+    <text class="sub" x="456" y="61">screen-plane force</text>
+    <path class="line" d="M590 43H642"/>
+    <rect class="node2" x="654" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="674" y="34">切向投影</text>
+    <text class="sub" x="674" y="61">tangent only</text>
+    <path class="line" d="M808 43H860"/>
+    <rect class="node" x="872" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="892" y="34">积分角速度</text>
+    <text class="sub" x="892" y="61">angularVelocity</text>
+  </g>
+  <g transform="translate(54 286)">
+    <rect class="node3" x="0" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="20" y="34">高速驱动</text>
+    <text class="sub" x="20" y="61">spin drive</text>
+    <path class="line" d="M154 43H206"/>
+    <rect class="node2" x="218" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="238" y="34">阻尼</text>
+    <text class="sub" x="238" y="61">damping</text>
+    <path class="line" d="M372 43H424"/>
+    <rect class="node3" x="436" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="456" y="34">单帧限幅</text>
+    <text class="sub" x="456" y="61">delta clamp</text>
+    <path class="line" d="M590 43H642"/>
+    <rect class="node" x="654" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="674" y="34">连续角度</text>
+    <text class="sub" x="674" y="61">orbitAngle</text>
+    <path class="line" d="M808 43H860"/>
+    <rect class="node2" x="872" y="0" width="154" height="86" rx="8"/>
+    <text class="label" x="892" y="34">绘制 + 反馈</text>
+    <text class="sub" x="892" y="61">draw, audio, haptics</text>
+  </g>
+  <path class="line" d="M1003 184C1060 224 1060 260 1003 286"/>
+  <text class="sub" x="812" y="462">目标：物理输入不断流，音频与触感不阻塞 SwiftUI 帧回调。</text>
+  <text class="sub" x="812" y="486">Goal: keep input continuous and keep feedback off the frame path.</text>
+</svg>

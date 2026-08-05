@@ -17,6 +17,7 @@ struct ContentView: View {
     @StateObject private var haptics = CicadaHaptics()
     @State private var lastAudioPulseID = 0
     @State private var lastStartPulseID = 0
+    @State private var lastFrictionHapticPulseID = 0
     @State private var isShowingIntroduction = false
     @State private var isGameRunning = false
     @State private var windowSize: CGSize = .zero
@@ -89,7 +90,7 @@ struct ContentView: View {
         }
         .onChange(of: isShowingIntroduction) { _, isPresented in
             if isPresented {
-                stopGame()
+                pauseGameForPresentation()
             } else {
                 startGame(wakeHaptics: false)
             }
@@ -100,15 +101,33 @@ struct ContentView: View {
             buzzer.syncMotion(rate: motion.audioPlaybackRate, isMoving: motion.spinSpeedRatio > 0)
             if motion.spinStartPulseID != lastStartPulseID {
                 lastStartPulseID = motion.spinStartPulseID
-                haptics.startPulse(intensity: motion.shakeIntensity)
-            } else if motion.spinSpeedRatio == 0 {
-                haptics.prepare()
+                if CicadaTuning.isMotionHapticsEnabled {
+                    Task { @MainActor in
+                        haptics.startPulse(intensity: motion.shakeIntensity)
+                    }
+                }
             }
             if motion.audioPulseID != lastAudioPulseID {
                 let pulseCount = motion.audioPulseID - lastAudioPulseID
                 lastAudioPulseID = motion.audioPulseID
-                haptics.phasePulse(intensity: motion.shakeIntensity, speedRatio: motion.spinSpeedRatio, count: pulseCount)
+                if CicadaTuning.isMotionHapticsEnabled {
+                    Task { @MainActor in
+                        haptics.phasePulse(intensity: motion.shakeIntensity, speedRatio: motion.spinSpeedRatio, count: pulseCount)
+                    }
+                }
                 buzzer.playPulses(count: pulseCount, rate: motion.audioPlaybackRate)
+            }
+            if motion.frictionHapticPulseID != lastFrictionHapticPulseID {
+                lastFrictionHapticPulseID = motion.frictionHapticPulseID
+                if CicadaTuning.isMotionHapticsEnabled {
+                    Task { @MainActor in
+                        haptics.phasePulse(
+                            intensity: max(motion.shakeIntensity, motion.frictionHapticLevel),
+                            speedRatio: max(motion.spinSpeedRatio, motion.frictionHapticLevel),
+                            count: 1
+                        )
+                    }
+                }
             }
         }
     }
@@ -117,10 +136,12 @@ struct ContentView: View {
         guard !isGameRunning else { return }
         lastAudioPulseID = 0
         lastStartPulseID = 0
+        lastFrictionHapticPulseID = 0
         UIApplication.shared.isIdleTimerDisabled = true
-        motion.start()
         buzzer.start()
-        haptics.prepare()
+        buzzer.ensureAudioIsWarm()
+        motion.start()
+        haptics.resume()
         if wakeHaptics {
             haptics.wake()
         }
@@ -129,11 +150,20 @@ struct ContentView: View {
 
     private func stopGame() {
         guard isGameRunning else { return }
+        isGameRunning = false
         motion.stop()
         buzzer.stop()
         haptics.reset()
         UIApplication.shared.isIdleTimerDisabled = false
+    }
+
+    private func pauseGameForPresentation() {
+        guard isGameRunning else { return }
         isGameRunning = false
+        motion.stop()
+        buzzer.pauseForPresentation()
+        haptics.suspend()
+        UIApplication.shared.isIdleTimerDisabled = false
     }
 }
 

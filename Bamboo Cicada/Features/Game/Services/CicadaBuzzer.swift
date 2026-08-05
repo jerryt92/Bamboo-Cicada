@@ -11,9 +11,11 @@ final class CicadaBuzzer: ObservableObject {
     @Published var statusText = "音频准备中"
 
     private var players: [AVAudioPlayer] = []
+    private let audioQueue = DispatchQueue(label: "Bamboo Cicada Audio", qos: .userInitiated)
     private var nextPlayerIndex = 0
     private var isRunning = false
-    private var hasScheduledHardwarePrewarm = false
+    private var hasSyncedIdle = true
+    private var hasPrewarmedAudioHardware = false
     private var routeObserver: NSObjectProtocol?
     private var interruptionObserver: NSObjectProtocol?
     private let audioStartOffset: TimeInterval = 0
@@ -41,7 +43,7 @@ final class CicadaBuzzer: ObservableObject {
                     audioPlayer.prepareToPlay()
                     return audioPlayer
                 }
-                scheduleAudioHardwarePrewarm()
+                prewarmAudioHardware()
                 updateStatus(triggered: false)
             } catch {
                 statusText = "音频加载失败: \(error.localizedDescription)"
@@ -63,6 +65,8 @@ final class CicadaBuzzer: ObservableObject {
             player.volume = 1
             player.prepareToPlay()
         }
+        hasSyncedIdle = true
+        prewarmAudioHardware()
         updateStatus(triggered: false)
     }
 
@@ -78,21 +82,39 @@ final class CicadaBuzzer: ObservableObject {
         }
     }
 
-    private func scheduleAudioHardwarePrewarm() {
-        guard !hasScheduledHardwarePrewarm else { return }
-        hasScheduledHardwarePrewarm = true
+    private func prewarmAudioHardware() {
+        guard isRunning, !hasPrewarmedAudioHardware else { return }
+        hasPrewarmedAudioHardware = true
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+        let warmCount = CicadaTuning.audioPrewarmPlayerCount
+        audioQueue.async { [weak self] in
             guard let self, self.isRunning else { return }
-            self.prewarmAudioHardware()
+            let warmPlayers = Array(self.players.prefix(warmCount))
+            for player in warmPlayers {
+                player.volume = 0
+                player.currentTime = 0
+                player.play()
+            }
+
+            self.audioQueue.asyncAfter(deadline: .now() + CicadaTuning.audioPrewarmDuration) { [weak self] in
+                guard let self, self.isRunning else { return }
+                for player in warmPlayers {
+                    player.stop()
+                    player.currentTime = 0
+                    player.volume = 1
+                    player.prepareToPlay()
+                }
+            }
         }
     }
 
-    private func prewarmAudioHardware() {
-        for player in players.prefix(3) {
-            player.volume = 0
-            player.currentTime = 0
-            player.play()
+    func ensureAudioIsWarm() {
+        prewarmAudioHardware()
+    }
+
+    private func resetPlayersAfterWarmupIfNeeded() {
+        guard hasPrewarmedAudioHardware else { return }
+        for player in players where player.volume == 0 {
             player.stop()
             player.currentTime = 0
             player.volume = 1
@@ -102,20 +124,49 @@ final class CicadaBuzzer: ObservableObject {
 
     func stop() {
         guard isRunning else { return }
-        players.forEach { player in
-            player.stop()
-            player.currentTime = 0
-            player.volume = 1
+        audioQueue.async { [weak self] in
+            guard let self else { return }
+            self.players.forEach { player in
+                player.stop()
+                player.currentTime = 0
+                player.volume = 1
+            }
         }
         nextPlayerIndex = 0
+        hasSyncedIdle = true
         isRunning = false
-        hasScheduledHardwarePrewarm = false
+        hasPrewarmedAudioHardware = false
         removeAudioObservers()
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
+    func pauseForPresentation() {
+        guard isRunning else { return }
+        hasSyncedIdle = true
+
+        audioQueue.async { [weak self] in
+            guard let self else { return }
+            self.players.forEach { player in
+                if player.isPlaying, player.volume > 0.02 {
+                    self.fadeOut(player)
+                } else {
+                    player.stop()
+                    player.currentTime = 0
+                    player.volume = 1
+                }
+            }
+        }
+    }
+
     func playPulse(rate: Double) {
+        audioQueue.async { [weak self] in
+            self?.playPulseOnAudioQueue(rate: rate)
+        }
+    }
+
+    private func playPulseOnAudioQueue(rate: Double) {
         guard isRunning, let playerIndex = nextAvailablePlayerIndex() else { return }
+        resetPlayersAfterWarmupIfNeeded()
 
         let player = players[playerIndex]
         let playbackRate = clampedPlaybackRate(rate)
@@ -129,27 +180,41 @@ final class CicadaBuzzer: ObservableObject {
     func playPulses(count: Int, rate: Double) {
         guard count > 0 else { return }
 
-        for _ in 0..<min(count, 8) {
-            playPulse(rate: rate)
+        let pulseCount = min(count, 8)
+        audioQueue.async { [weak self] in
+            guard let self else { return }
+            for _ in 0..<pulseCount {
+                self.playPulseOnAudioQueue(rate: rate)
+            }
         }
     }
 
     func syncMotion(rate: Double, isMoving: Bool) {
-        guard isRunning, !isMoving else { return }
-        for player in players {
-            if player.isPlaying, player.volume > 0.02 {
-                fadeOut(player)
-            } else {
-                player.stop()
-                player.currentTime = 0
-                player.volume = 1
+        guard isRunning else { return }
+        if isMoving {
+            hasSyncedIdle = false
+            return
+        }
+        guard !hasSyncedIdle else { return }
+        hasSyncedIdle = true
+
+        audioQueue.async { [weak self] in
+            guard let self, self.isRunning else { return }
+            for player in self.players {
+                if player.isPlaying, player.volume > 0.02 {
+                    self.fadeOut(player)
+                } else {
+                    player.stop()
+                    player.currentTime = 0
+                    player.volume = 1
+                }
             }
         }
     }
 
     private func fadeOut(_ player: AVAudioPlayer) {
         player.setVolume(0, fadeDuration: 0.018)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) { [weak player] in
+        audioQueue.asyncAfter(deadline: .now() + 0.02) { [weak player] in
             guard let player, player.volume <= 0.02 else { return }
             player.stop()
             player.currentTime = 0
