@@ -83,7 +83,7 @@ struct CicadaToyView: View {
 
     private func beadPair(x: CGFloat, y: CGFloat) -> some View {
         ZStack {
-            HStack(spacing: 6) {
+            VStack(spacing: 6) {
                 Circle()
                     .fill(.red)
                     .frame(width: 32, height: 32)
@@ -102,11 +102,11 @@ struct CicadaToyView: View {
                 }
         }
         .overlay {
-            HStack(spacing: 22) {
+            VStack(spacing: 22) {
                 Circle().fill(.white.opacity(0.35)).frame(width: 8, height: 8)
                 Circle().fill(.white.opacity(0.35)).frame(width: 8, height: 8)
             }
-            .offset(x: -5, y: -6)
+            .offset(x: -5, y: 0)
         }
         .shadow(color: .black.opacity(0.22), radius: 8, y: 6)
         .position(x: x, y: y)
