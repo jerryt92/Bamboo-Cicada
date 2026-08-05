@@ -27,7 +27,6 @@ final class CicadaMotionController: ObservableObject {
     private var rawSway: Double = 0
     private var angularVelocity: Double = 0
     private var highSpeedBlendRatio: Double = 0
-    private var highSpeedDirectionSample: Double = 0
     private var highSpeedSpinDirection: Double?
     private var audioPhaseAccumulator = 0.0
     private var frictionHapticAccumulator = 0.0
@@ -101,7 +100,6 @@ final class CicadaMotionController: ObservableObject {
         rawSway = 0
         angularVelocity = 0
         highSpeedBlendRatio = 0
-        highSpeedDirectionSample = 0
         highSpeedSpinDirection = nil
         audioPhaseAccumulator = 0
         frictionHapticAccumulator = 0
@@ -136,15 +134,34 @@ final class CicadaMotionController: ObservableObject {
         let previousAngularVelocity = angularVelocity
         updateSmoothedMotionInput()
         updateHighSpeedBlend()
-        let force = tablePlaneForce(highSpeedBlendRatio: highSpeedBlendRatio)
-        let tangentialForce = CicadaRestOrientation.tangentialForce(
+        let force = tablePlaneForceComponents(highSpeedBlendRatio: highSpeedBlendRatio)
+        let gravityTangentialForce = CicadaRestOrientation.tangentialForce(
             angleDegrees: orbitAngle,
-            forceX: force.x,
-            forceY: force.y
+            forceX: force.gravity.x,
+            forceY: force.gravity.y
+        )
+        let accelerationTangentialForce = CicadaRestOrientation.tangentialForce(
+            angleDegrees: orbitAngle,
+            forceX: force.acceleration.x,
+            forceY: force.acceleration.y
         )
 
-        // 刚性绳约束：合力的径向分量由绳子吃掉，只有切向分量能改变圆周角速度。
-        angularVelocity += tangentialForce * CicadaTuning.ropeGravityResponse
+        // 刚性绳约束：重力先决定自然运动方向；加速度只沿既有方向追加能量。
+        let gravityDrivenVelocity = CicadaSpinDirection.velocityAfterGravity(
+            baseVelocity: angularVelocity,
+            gravityDelta: gravityTangentialForce * CicadaTuning.ropeGravityResponse,
+            lockedDirection: highSpeedSpinDirection
+        )
+        highSpeedSpinDirection = CicadaSpinDirection.lockedDirection(
+            currentDirection: highSpeedSpinDirection,
+            angularVelocity: gravityDrivenVelocity,
+            blendRatio: highSpeedBlendRatio
+        )
+        angularVelocity = CicadaSpinDirection.velocityAfterAcceleration(
+            baseVelocity: gravityDrivenVelocity,
+            accelerationDelta: accelerationTangentialForce * CicadaTuning.ropeGravityResponse,
+            lockedDirection: highSpeedSpinDirection
+        )
         applyHighSpeedSpinDrive(maximumVelocity: maximumVelocity)
         angularVelocity *= CicadaTuning.ropeAngularDamping
         let velocityDelta = angularVelocity - previousAngularVelocity
@@ -195,21 +212,6 @@ final class CicadaMotionController: ObservableObject {
     }
 
     private func applyHighSpeedSpinDrive(maximumVelocity: Double) {
-        highSpeedDirectionSample += (rawSway - highSpeedDirectionSample) * CicadaTuning.highSpeedDirectionSmoothing
-
-        if highSpeedBlendRatio > CicadaTuning.highSpeedDirectionUnlockRatio {
-            let sampledDirection = abs(highSpeedDirectionSample) > 0.035 ? highSpeedDirectionSample : rawSway
-            if highSpeedSpinDirection == nil, abs(sampledDirection) > 0.025 {
-                highSpeedSpinDirection = sampledDirection < 0 ? -1 : 1
-            }
-        }
-
-        if highSpeedBlendRatio < CicadaTuning.highSpeedDirectionUnlockRatio,
-           abs(angularVelocity) < CicadaTuning.ropeAudioVelocityDeadzone {
-            highSpeedSpinDirection = nil
-            highSpeedDirectionSample = 0
-        }
-
         guard let direction = highSpeedSpinDirection else { return }
 
         // 高速区不是重置速度，而是把已有角速度平滑拉向同方向目标速度，保留进入瞬间的惯性。
@@ -219,7 +221,9 @@ final class CicadaMotionController: ObservableObject {
         angularVelocity += (targetVelocity - angularVelocity) * response
     }
 
-    private func tablePlaneForce(highSpeedBlendRatio: Double) -> (x: Double, y: Double) {
+    private func tablePlaneForceComponents(
+        highSpeedBlendRatio: Double
+    ) -> (gravity: (x: Double, y: Double), acceleration: (x: Double, y: Double)) {
         let minimumGravity = max(0, min(1, CicadaTuning.highSpeedMinimumGravityInfluence))
         let gravityScale = 1 - highSpeedBlendRatio * (1 - minimumGravity)
         let accelerationScale = CicadaTuning.ropeAccelerationResponse
@@ -231,8 +235,8 @@ final class CicadaMotionController: ObservableObject {
         let inertialForceY = smoothedAccelerationY * accelerationScale
 
         return (
-            x: gravityForceX + inertialForceX,
-            y: gravityForceY + inertialForceY
+            gravity: (x: gravityForceX, y: gravityForceY),
+            acceleration: (x: inertialForceX, y: inertialForceY)
         )
     }
 

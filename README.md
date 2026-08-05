@@ -125,7 +125,7 @@ angularVelocity += tangentialForce * ropeGravityResponse
 
 - 重力影响降到 `highSpeedMinimumGravityInfluence`，避免高速旋转被重力持续拖慢。
 - 加速度影响按 `highSpeedAccelerationBoost` 放大。
-- 根据 `rawSway` 采样高速甩动方向 `highSpeedSpinDirection`。
+- 高速区不再由加速度采样或跨零换向；加速度只在已有方向上追加能量，`highSpeedSpinDirection` 继承角速度方向并在速度接近 0 后释放。
 - `applyHighSpeedSpinDrive` 会把现有角速度平滑拉向目标旋转速度，但不会重置角速度，因此低速摆动进入高速旋转时惯性会保留。
 - `highSpeedBlendKickstartRatio` 会在第一次快速甩动时预先给一段高速混合比例，避免第一次起转从 0 慢慢爬升造成卡顿。
 

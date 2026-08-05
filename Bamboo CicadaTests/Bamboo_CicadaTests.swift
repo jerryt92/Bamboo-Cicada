@@ -27,6 +27,107 @@ struct Bamboo_CicadaTests {
         #expect(CicadaRestOrientation.tangentialForce(angleDegrees: 270, forceX: 0, forceY: 1) > 0.99)
     }
 
+    @Test func highSpeedDirectionKeepsExistingGravityMotionDirection() {
+        let direction = CicadaSpinDirection.lockedDirection(
+            currentDirection: nil,
+            angularVelocity: 0.2,
+            blendRatio: 0.5
+        )
+
+        #expect(direction == 1)
+    }
+
+    @Test func highSpeedDirectionIgnoresAccelerationWhenStill() {
+        let direction = CicadaSpinDirection.lockedDirection(
+            currentDirection: nil,
+            angularVelocity: 0.01,
+            blendRatio: 0.5
+        )
+
+        #expect(direction == nil)
+    }
+
+    @Test func highSpeedDirectionDoesNotReverseUntilStopped() {
+        let direction = CicadaSpinDirection.lockedDirection(
+            currentDirection: 1,
+            angularVelocity: 3,
+            blendRatio: 0.8
+        )
+
+        #expect(direction == 1)
+    }
+
+    @Test func highSpeedDirectionReleasesWhenStopped() {
+        let direction = CicadaSpinDirection.lockedDirection(
+            currentDirection: 1,
+            angularVelocity: 0.001,
+            blendRatio: 0.8
+        )
+
+        #expect(direction == nil)
+    }
+
+
+    @Test func gravityCanCreateDirectionWhenUnlocked() {
+        let velocity = CicadaSpinDirection.velocityAfterGravity(
+            baseVelocity: 0,
+            gravityDelta: -0.2,
+            lockedDirection: nil
+        )
+
+        #expect(abs(velocity + 0.2) < 0.001)
+    }
+
+    @Test func gravityStopsLockedDirectionBeforeReversing() {
+        let velocity = CicadaSpinDirection.velocityAfterGravity(
+            baseVelocity: 0.2,
+            gravityDelta: -2,
+            lockedDirection: 1
+        )
+
+        #expect(velocity == 0)
+    }
+
+    @Test func accelerationDoesNotCreateDirectionFromStillness() {
+        let velocity = CicadaSpinDirection.velocityAfterAcceleration(
+            baseVelocity: 0.01,
+            accelerationDelta: -2,
+            lockedDirection: nil
+        )
+
+        #expect(abs(velocity - 0.01) < 0.001)
+    }
+
+    @Test func accelerationIgnoresOppositeGravityDirection() {
+        let velocity = CicadaSpinDirection.velocityAfterAcceleration(
+            baseVelocity: 0.2,
+            accelerationDelta: -2,
+            lockedDirection: nil
+        )
+
+        #expect(abs(velocity - 0.2) < 0.001)
+    }
+
+    @Test func accelerationCannotReverseLockedDirection() {
+        let velocity = CicadaSpinDirection.velocityAfterAcceleration(
+            baseVelocity: 0.2,
+            accelerationDelta: -2,
+            lockedDirection: 1
+        )
+
+        #expect(abs(velocity - 0.2) < 0.001)
+    }
+
+    @Test func accelerationCanBoostExistingDirection() {
+        let velocity = CicadaSpinDirection.velocityAfterAcceleration(
+            baseVelocity: 0.2,
+            accelerationDelta: 0.5,
+            lockedDirection: nil
+        )
+
+        #expect(abs(velocity - 0.7) < 0.001)
+    }
+
     @Test func tuningKeepsOriginalSpinVelocityContract() {
         #expect(CicadaTuning.minimumRotationPeriod == 360.0 / (CicadaTuning.maximumSpinVelocityDegreesPerFrame * CicadaTuning.framesPerSecond))
         #expect(CicadaTuning.minimumAudioPulsePeriod == CicadaTuning.audioPhaseDegrees / (CicadaTuning.maximumSpinVelocityDegreesPerFrame * CicadaTuning.framesPerSecond))

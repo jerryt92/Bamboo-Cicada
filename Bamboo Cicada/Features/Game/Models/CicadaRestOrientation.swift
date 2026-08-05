@@ -40,3 +40,55 @@ enum CicadaRestOrientation {
         return value
     }
 }
+
+enum CicadaSpinDirection {
+    static func lockedDirection(
+        currentDirection: Double?,
+        angularVelocity: Double,
+        blendRatio: Double
+    ) -> Double? {
+        if currentDirection != nil,
+           abs(angularVelocity) < CicadaTuning.ropeAudioVelocityDeadzone {
+            return nil
+        }
+
+        guard blendRatio > CicadaTuning.highSpeedDirectionUnlockRatio,
+              currentDirection == nil else {
+            return currentDirection
+        }
+
+        return direction(for: angularVelocity, threshold: CicadaTuning.highSpeedMotionDirectionLockVelocity)
+    }
+
+    static func velocityAfterGravity(
+        baseVelocity: Double,
+        gravityDelta: Double,
+        lockedDirection: Double?
+    ) -> Double {
+        let candidateVelocity = baseVelocity + gravityDelta
+        guard let lockedDirection else { return candidateVelocity }
+        guard candidateVelocity * lockedDirection <= 0 else { return candidateVelocity }
+        return 0
+    }
+
+    static func velocityAfterAcceleration(
+        baseVelocity: Double,
+        accelerationDelta: Double,
+        lockedDirection: Double?
+    ) -> Double {
+        let referenceDirection = lockedDirection
+            ?? direction(for: baseVelocity, threshold: CicadaTuning.highSpeedMotionDirectionLockVelocity)
+
+        guard let referenceDirection,
+              accelerationDelta * referenceDirection > 0 else {
+            return baseVelocity
+        }
+
+        return baseVelocity + accelerationDelta
+    }
+
+    private static func direction(for velocity: Double, threshold: Double) -> Double? {
+        guard abs(velocity) >= threshold else { return nil }
+        return velocity < 0 ? -1 : 1
+    }
+}

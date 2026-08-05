@@ -30,8 +30,8 @@ enum CicadaTuning {
     // 高速区间追向目标旋转速度的力度。越大，进入甩动后越快转起来；过大会产生速度突变。
     static var highSpeedSpinDriveResponse = 0.22
 
-    // 高速方向采样的平滑比例。越大，甩动方向更跟手；越小，方向更稳定。
-    static var highSpeedDirectionSmoothing = 0.24
+    // 高速区首次锁方向时，只要已有这点角速度，就优先沿当前运动方向继续甩。
+    static var highSpeedMotionDirectionLockVelocity = 0.06
 
     // 高速混合比例低于这个值且速度也很低时，才释放上一次锁定的甩动方向。
     static var highSpeedDirectionUnlockRatio = 0.08
@@ -60,10 +60,7 @@ enum CicadaTuning {
     // 声音播放速度上限，避免高速摆动时音频变得过快。
     static var maximumAudioPlaybackRate = 1.0
 
-    // 启动时静音播放一小段音频来预热解码和音频硬件，避免第一次真实播放卡顿。
-    static let audioPrewarmDuration: TimeInterval = 0.16
-
-    // 静音预热使用的播放器数量。越多越能覆盖播放器池，但启动成本也更高。
+    // 启动时只 prepare 一部分播放器，不播放音频，确保冷启动完全静音。
     static let audioPrewarmPlayerCount = 4
 
     // 是否启用运动过程中的触感。触感只跟随相位脉冲，不在起转第一帧打断动画。

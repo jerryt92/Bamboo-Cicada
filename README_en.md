@@ -125,7 +125,7 @@ At high speed, `highSpeedBlendRatio` eases toward `1`:
 
 - Gravity influence drops to `highSpeedMinimumGravityInfluence`, so fast rotation is not constantly dragged down.
 - Acceleration influence is boosted by `highSpeedAccelerationBoost`.
-- `highSpeedSpinDirection` is sampled from `rawSway`.
+- High-speed motion no longer samples acceleration or crosses zero to choose direction; acceleration only adds energy along an existing direction, while `highSpeedSpinDirection` inherits angular velocity and releases near zero speed.
 - `applyHighSpeedSpinDrive` eases the existing angular velocity toward the target spin speed without resetting inertia.
 - `highSpeedBlendKickstartRatio` gives the first fast shake an initial high-speed blend so spin-up does not crawl from zero.
 
