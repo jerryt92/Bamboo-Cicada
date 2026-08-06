@@ -136,6 +136,74 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         }
     }
 
+    var preferenceTitle: String {
+        switch self {
+        case .zh: "偏好"
+        case .zhHant: "偏好"
+        case .en: "Preferences"
+        case .ja: "環境設定"
+        case .ko: "환경설정"
+        case .fr: "Préférences"
+        }
+    }
+
+    var hapticStrengthTitle: String {
+        switch self {
+        case .zh: "震动强度"
+        case .zhHant: "震動強度"
+        case .en: "Haptic Strength"
+        case .ja: "触覚の強さ"
+        case .ko: "햅틱 강도"
+        case .fr: "Intensité haptique"
+        }
+    }
+
+    func hapticStrengthTitle(for strength: HapticStrength) -> String {
+        switch (self, strength) {
+        case (.zh, .gentle): "弱"
+        case (.zh, .medium): "适中"
+        case (.zh, .strong): "强"
+        case (.zhHant, .gentle): "弱"
+        case (.zhHant, .medium): "適中"
+        case (.zhHant, .strong): "強"
+        case (.en, .gentle): "Gentle"
+        case (.en, .medium): "Medium"
+        case (.en, .strong): "Strong"
+        case (.ja, .gentle): "弱"
+        case (.ja, .medium): "標準"
+        case (.ja, .strong): "強"
+        case (.ko, .gentle): "약함"
+        case (.ko, .medium): "보통"
+        case (.ko, .strong): "강함"
+        case (.fr, .gentle): "Faible"
+        case (.fr, .medium): "Moyenne"
+        case (.fr, .strong): "Forte"
+        }
+    }
+
+    func hapticStrengthSegmentTitle(for strength: HapticStrength) -> String {
+        switch (self, strength) {
+        case (.zh, .gentle): "弱"
+        case (.zh, .medium): "适中"
+        case (.zh, .strong): "强"
+        case (.zhHant, .gentle): "弱"
+        case (.zhHant, .medium): "適中"
+        case (.zhHant, .strong): "強"
+        case (.en, .gentle): "Gentle"
+        case (.en, .medium): "Medium"
+        case (.en, .strong): "Strong"
+        case (.ja, .gentle): "弱"
+        case (.ja, .medium): "標準"
+        case (.ja, .strong): "強"
+        case (.ko, .gentle): "약함"
+        case (.ko, .medium): "보통"
+        case (.ko, .strong): "강함"
+        case (.fr, .gentle): "Faible"
+        case (.fr, .medium): "Moyenne"
+        case (.fr, .strong): "Forte"
+        }
+    }
+
     var aboutTitle: String {
         switch self {
         case .zh: "关于"

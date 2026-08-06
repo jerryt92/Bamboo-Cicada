@@ -22,9 +22,14 @@ struct ContentView: View {
     @State private var isGameRunning = false
     @State private var windowSize: CGSize = .zero
     @StateObject private var displayLink = DisplayLinkDriver()
+    @AppStorage(HapticStrength.storageKey) private var hapticStrengthRawValue = HapticStrength.medium.rawValue
 
     private var language: AppLanguage {
         AppLanguage(locale: locale)
+    }
+
+    private var hapticStrength: HapticStrength {
+        HapticStrength(rawValue: hapticStrengthRawValue) ?? .medium
     }
 
     var body: some View {
@@ -103,7 +108,7 @@ struct ContentView: View {
                 lastStartPulseID = motion.spinStartPulseID
                 if CicadaTuning.isMotionHapticsEnabled {
                     Task { @MainActor in
-                        haptics.startPulse(intensity: motion.shakeIntensity)
+                        haptics.startPulse(speedRatio: motion.spinSpeedRatio, strength: hapticStrength)
                     }
                 }
             }
@@ -112,7 +117,7 @@ struct ContentView: View {
                 lastAudioPulseID = motion.audioPulseID
                 if CicadaTuning.isMotionHapticsEnabled {
                     Task { @MainActor in
-                        haptics.phasePulse(intensity: motion.shakeIntensity, speedRatio: motion.spinSpeedRatio, count: pulseCount)
+                        haptics.phasePulse(speedRatio: motion.spinSpeedRatio, count: pulseCount, strength: hapticStrength)
                     }
                 }
                 buzzer.playPulses(count: pulseCount, rate: motion.audioPlaybackRate)
@@ -122,9 +127,9 @@ struct ContentView: View {
                 if CicadaTuning.isMotionHapticsEnabled {
                     Task { @MainActor in
                         haptics.phasePulse(
-                            intensity: max(motion.shakeIntensity, motion.frictionHapticLevel),
                             speedRatio: max(motion.spinSpeedRatio, motion.frictionHapticLevel),
-                            count: 1
+                            count: 1,
+                            strength: hapticStrength
                         )
                     }
                 }
@@ -134,9 +139,9 @@ struct ContentView: View {
 
     private func startGame(wakeHaptics: Bool) {
         guard !isGameRunning else { return }
-        lastAudioPulseID = 0
-        lastStartPulseID = 0
-        lastFrictionHapticPulseID = 0
+        lastAudioPulseID = motion.audioPulseID
+        lastStartPulseID = motion.spinStartPulseID
+        lastFrictionHapticPulseID = motion.frictionHapticPulseID
         UIApplication.shared.isIdleTimerDisabled = true
         buzzer.start()
         buzzer.ensureAudioIsWarm()
@@ -163,7 +168,7 @@ struct ContentView: View {
         guard isGameRunning else { return }
         isGameRunning = false
         displayLink.stop()
-        motion.stop()
+        motion.pause()
         buzzer.pauseForPresentation()
         haptics.suspend()
         UIApplication.shared.isIdleTimerDisabled = false
@@ -187,11 +192,11 @@ private final class DisplayLinkDriver: NSObject, ObservableObject {
         guard displayLink == nil else { return }
 
         let displayLink = CADisplayLink(target: self, selector: #selector(didRefresh(_:)))
-        // 主页锁定 120 帧，不做设备自适应。
+        let maximumRate = Float(UIScreen.main.maximumFramesPerSecond)
         displayLink.preferredFrameRateRange = CAFrameRateRange(
-            minimum: 120,
-            maximum: 120,
-            preferred: 120
+            minimum: min(60, maximumRate),
+            maximum: maximumRate,
+            preferred: maximumRate
         )
         displayLink.add(to: .main, forMode: .common)
         self.displayLink = displayLink

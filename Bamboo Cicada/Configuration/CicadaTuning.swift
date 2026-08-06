@@ -81,6 +81,9 @@ enum CicadaTuning {
     // 两次触感脉冲之间的最短间隔，防止高频摆动时震动过密。
     static let hapticMinimumInterval: TimeInterval = 0.03
 
+    // 转速映射到触感强度的对数曲线。越大，低速触感越容易被感知。
+    static let hapticIntensityLogarithmicCurve = 9.0
+
     // 触感硬件预热的最短间隔，避免在动画帧里反复 prepare 造成卡顿。
     static let hapticPrepareMinimumInterval: TimeInterval = 0.25
 

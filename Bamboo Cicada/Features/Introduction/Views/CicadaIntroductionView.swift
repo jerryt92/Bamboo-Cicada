@@ -50,28 +50,21 @@ struct CicadaIntroductionView: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     NavigationLink {
-                        CicadaAboutView(language: language)
+                        CicadaPreferencesView(language: language)
                     } label: {
-                        HStack(spacing: 12) {
-                            Text(language.aboutTitle)
-                                .font(.system(size: 18, weight: .semibold, design: .serif))
-                                .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05))
-
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05).opacity(0.64))
-                        }
-                        .padding(.vertical, 14)
-                        .overlay(alignment: .top) {
-                            Rectangle()
-                                .fill(Color(red: 0.12, green: 0.08, blue: 0.04).opacity(0.22))
-                                .frame(height: 1)
-                        }
+                        navigationRow(title: language.preferenceTitle, showsDivider: true)
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                     .padding(.top, 22)
+
+                    NavigationLink {
+                        CicadaAboutView(language: language)
+                    } label: {
+                        navigationRow(title: language.aboutTitle, showsDivider: true)
+                    }
+                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
 
                     Color.clear
                         .frame(height: 116)
@@ -102,6 +95,62 @@ struct CicadaIntroductionView: View {
                 .ignoresSafeArea()
         }
         .statusBarHidden(true)
+    }
+
+    private func navigationRow(title: String, showsDivider: Bool) -> some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .font(.system(size: 18, weight: .semibold, design: .serif))
+                .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05))
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05).opacity(0.64))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .padding(.vertical, 14)
+        .overlay(alignment: .top) {
+            if showsDivider {
+                Rectangle()
+                    .fill(Color(red: 0.12, green: 0.08, blue: 0.04).opacity(0.22))
+                    .frame(height: 1)
+            }
+        }
+    }
+}
+
+private struct CicadaPreferencesView: View {
+    let language: AppLanguage
+    @AppStorage(HapticStrength.storageKey) private var hapticStrengthRawValue = HapticStrength.medium.rawValue
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(language.hapticStrengthTitle)
+                .font(.system(size: 20, weight: .semibold, design: .serif))
+                .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05))
+
+            Picker(language.hapticStrengthTitle, selection: $hapticStrengthRawValue) {
+                ForEach(HapticStrength.allCases) { strength in
+                    Text(language.hapticStrengthSegmentTitle(for: strength))
+                        .tag(strength.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityLabel(language.hapticStrengthTitle)
+        }
+        .padding(.top, 64)
+        .padding(.horizontal, 54)
+        .frame(maxWidth: 640, maxHeight: .infinity, alignment: .topLeading)
+        .background {
+            ScrollPaperBackground()
+                .ignoresSafeArea()
+        }
+        .navigationTitle(language.preferenceTitle)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 }
 

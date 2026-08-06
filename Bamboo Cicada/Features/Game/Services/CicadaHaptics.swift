@@ -4,15 +4,92 @@
 //
 
 import Combine
+import Foundation
 import QuartzCore
 import UIKit
+
+enum HapticStrength: String, CaseIterable, Identifiable {
+    case gentle
+    case medium
+    case strong
+
+    static let storageKey = "hapticStrength"
+
+    var id: String { rawValue }
+
+    var multiplier: Double {
+        switch self {
+        case .gentle: 0.65
+        case .medium: 1.0
+        case .strong: 1.3
+        }
+    }
+}
+
+private struct HapticPulse: Sendable {
+    var speedRatio: Double
+    var strengthMultiplier: Double
+    var count: Int
+
+    func merged(with other: HapticPulse) -> HapticPulse {
+        HapticPulse(
+            speedRatio: max(speedRatio, other.speedRatio),
+            strengthMultiplier: max(strengthMultiplier, other.strengthMultiplier),
+            count: max(count, other.count)
+        )
+    }
+}
+
+private final class HapticPulseScheduler: @unchecked Sendable {
+    private let queue = DispatchQueue(label: "Bamboo Cicada Haptic Scheduler", qos: .userInitiated)
+    private var pendingPulse: HapticPulse?
+    private var lastPulseTime: TimeInterval = 0
+    private var isDeliveryScheduled = false
+    private var generation = 0
+
+    func request(
+        _ pulse: HapticPulse,
+        minimumInterval: TimeInterval,
+        deliver: @escaping @Sendable (HapticPulse) -> Void
+    ) {
+        queue.async { [weak self] in
+            guard let self else { return }
+            self.pendingPulse = self.pendingPulse.map { $0.merged(with: pulse) } ?? pulse
+            guard !self.isDeliveryScheduled else { return }
+
+            self.isDeliveryScheduled = true
+            let delay = max(0, minimumInterval - (CACurrentMediaTime() - self.lastPulseTime))
+            let deliveryGeneration = self.generation
+            self.queue.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self, deliveryGeneration == self.generation else { return }
+                self.isDeliveryScheduled = false
+                guard let nextPulse = self.pendingPulse else { return }
+                self.pendingPulse = nil
+                self.lastPulseTime = CACurrentMediaTime()
+                DispatchQueue.main.async {
+                    deliver(nextPulse)
+                }
+            }
+        }
+    }
+
+    func cancel() {
+        queue.async { [weak self] in
+            guard let self else { return }
+            self.generation += 1
+            self.pendingPulse = nil
+            self.isDeliveryScheduled = false
+            self.lastPulseTime = 0
+        }
+    }
+}
 
 @MainActor
 final class CicadaHaptics: ObservableObject {
     private let mediumFeedback = UIImpactFeedbackGenerator(style: .medium)
     private let strongFeedback = UIImpactFeedbackGenerator(style: .rigid)
     private let heavyFeedback = UIImpactFeedbackGenerator(style: .heavy)
-    private var lastPhasePulseTime: TimeInterval = 0
+    private let pulseScheduler = HapticPulseScheduler()
     private var lastPrepareTime: TimeInterval = 0
     private var hasPendingPrepare = false
     private var isSuspended = false
@@ -35,16 +112,16 @@ final class CicadaHaptics: ObservableObject {
 
     func reset() {
         isSuspended = false
-        lastPhasePulseTime = 0
         lastPrepareTime = 0
         hasPendingPrepare = false
+        pulseScheduler.cancel()
         prepare()
     }
 
     func suspend() {
         isSuspended = true
-        lastPhasePulseTime = 0
         hasPendingPrepare = false
+        pulseScheduler.cancel()
     }
 
     func resume() {
@@ -52,32 +129,45 @@ final class CicadaHaptics: ObservableObject {
         prepare()
     }
 
-    func startPulse(intensity: Double) {
+    func startPulse(speedRatio: Double, strength: HapticStrength) {
         isSuspended = false
-        lastPhasePulseTime = 0
-        strongFeedback.impactOccurred(intensity: min(0.9, max(0.68, 0.64 + intensity * 0.24)))
+        strongFeedback.impactOccurred(intensity: intensity(for: speedRatio, strength: strength.multiplier))
         schedulePrepare()
     }
 
-    func phasePulse(intensity: Double, speedRatio: Double, count: Int) {
+    func phasePulse(speedRatio: Double, count: Int, strength: HapticStrength) {
         isSuspended = false
         guard count > 0 else { return }
-        let now = CACurrentMediaTime()
 
-        guard now - lastPhasePulseTime >= CicadaTuning.hapticMinimumInterval else {
-            return
+        pulseScheduler.request(
+            HapticPulse(
+                speedRatio: speedRatio,
+                strengthMultiplier: strength.multiplier,
+                count: count
+            ),
+            minimumInterval: CicadaTuning.hapticMinimumInterval
+        ) { [weak self] pulse in
+            Task { @MainActor [weak self] in
+                self?.performPhasePulse(pulse)
+            }
         }
-        lastPhasePulseTime = now
+    }
 
-        let impact = min(0.92, max(0.56, 0.52 + speedRatio * 0.42 + intensity * 0.24))
-        if speedRatio > 0.52 || count > 1 {
-            heavyFeedback.impactOccurred(intensity: impact)
-        } else if speedRatio > 0.12 {
-            strongFeedback.impactOccurred(intensity: max(0.56, impact))
-        } else {
-            mediumFeedback.impactOccurred(intensity: max(0.5, impact))
-        }
+    private func performPhasePulse(_ pulse: HapticPulse) {
+        guard !isSuspended else { return }
+
+        // 保持同一种触感发生器，避免跨阈值时出现体感台阶。
+        heavyFeedback.impactOccurred(
+            intensity: intensity(for: pulse.speedRatio, strength: pulse.strengthMultiplier)
+        )
         schedulePrepare()
+    }
+
+    private func intensity(for speedRatio: Double, strength: Double) -> Double {
+        let speed = max(0, min(1, speedRatio))
+        let curve = CicadaTuning.hapticIntensityLogarithmicCurve
+        let logarithmicIntensity = log1p(curve * speed) / log1p(curve)
+        return min(1, logarithmicIntensity * strength)
     }
 
     private func schedulePrepare() {

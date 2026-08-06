@@ -93,9 +93,14 @@ final class CicadaMotionController: ObservableObject {
         }
     }
 
-    func stop() {
+    // 菜单覆盖期间仅暂停传感器；位置、角速度和相位均保留，关闭菜单后可无缝续上。
+    func pause() {
         manager.stopDeviceMotionUpdates()
         manager.stopAccelerometerUpdates()
+    }
+
+    func stop() {
+        pause()
         rawIntensity = 0
         rawSway = 0
         angularVelocity = 0
