@@ -405,7 +405,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = BambooCicada-Info.plist;
+				INFOPLIST_FILE = "BambooCicada-Info.plist";
 				INFOPLIST_KEY_CADisableMinimumFrameDurationOnPhone = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "竹知了";
 				INFOPLIST_KEY_GCSupportsGameMode = NO;
@@ -460,7 +460,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = BambooCicada-Info.plist;
+				INFOPLIST_FILE = "BambooCicada-Info.plist";
 				INFOPLIST_KEY_CADisableMinimumFrameDurationOnPhone = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "竹知了";
 				INFOPLIST_KEY_GCSupportsGameMode = NO;

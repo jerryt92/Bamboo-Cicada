@@ -125,25 +125,47 @@ struct CicadaIntroductionView: View {
 private struct CicadaPreferencesView: View {
     let language: AppLanguage
     @AppStorage(HapticStrength.storageKey) private var hapticStrengthRawValue = HapticStrength.medium.rawValue
+    @AppStorage(CicadaBackgroundStyle.storageKey) private var backgroundStyleRawValue = CicadaBackgroundStyle.bamboo.rawValue
+    @AppStorage(CicadaStyle.storageKey) private var cicadaStyleRawValue = CicadaStyle.red.rawValue
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(language.hapticStrengthTitle)
-                .font(.system(size: 20, weight: .semibold, design: .serif))
-                .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05))
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(language.hapticStrengthTitle)
+                        .font(.system(size: 20, weight: .semibold, design: .serif))
+                        .foregroundStyle(sectionTextColor)
 
-            Picker(language.hapticStrengthTitle, selection: $hapticStrengthRawValue) {
-                ForEach(HapticStrength.allCases) { strength in
-                    Text(language.hapticStrengthSegmentTitle(for: strength))
-                        .tag(strength.rawValue)
+                    Picker(language.hapticStrengthTitle, selection: $hapticStrengthRawValue) {
+                        ForEach(HapticStrength.allCases) { strength in
+                            Text(language.hapticStrengthSegmentTitle(for: strength))
+                                .tag(strength.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .tint(.preferencePaperYellow)
+                    .accessibilityLabel(language.hapticStrengthTitle)
+                }
+
+                AppearanceCarousel(
+                    items: CicadaBackgroundStyle.allCases,
+                    selection: $backgroundStyleRawValue
+                ) { style in
+                    BackgroundStylePreview(style: style)
+                }
+
+                AppearanceCarousel(
+                    items: CicadaStyle.allCases,
+                    selection: $cicadaStyleRawValue
+                ) { style in
+                    CicadaStylePreview(style: style)
                 }
             }
-            .pickerStyle(.segmented)
-            .accessibilityLabel(language.hapticStrengthTitle)
+            .padding(.top, 48)
+            .padding(.horizontal, 36)
+            .padding(.bottom, 64)
+            .frame(maxWidth: 640, alignment: .leading)
         }
-        .padding(.top, 64)
-        .padding(.horizontal, 54)
-        .frame(maxWidth: 640, maxHeight: .infinity, alignment: .topLeading)
         .background {
             ScrollPaperBackground()
                 .ignoresSafeArea()
@@ -151,6 +173,181 @@ private struct CicadaPreferencesView: View {
         .navigationTitle(language.preferenceTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
+    }
+
+    private var sectionTextColor: Color {
+        Color(red: 0.14, green: 0.09, blue: 0.05)
+    }
+}
+
+private struct AppearanceCarousel<Item: Identifiable, Preview: View>: View where Item.ID == String {
+    let items: [Item]
+    @Binding var selection: String
+    @ViewBuilder let preview: (Item) -> Preview
+    @State private var scrollPosition: String?
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: 12) {
+                ForEach(items) { item in
+                    Button {
+                        selection = item.id
+                        withAnimation(.snappy) {
+                            scrollPosition = item.id
+                        }
+                    } label: {
+                        preview(item)
+                            .frame(width: 136, height: 94)
+                            .padding(8)
+                            .background(Color.preferencePaperYellow.opacity(selection == item.id ? 1.0 : 0.66))
+                            .shadow(
+                                color: selection == item.id
+                                    ? Color(red: 0.38, green: 0.23, blue: 0.05).opacity(0.22)
+                                    : .clear,
+                                radius: 5,
+                                y: 2
+                            )
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(
+                                        selection == item.id
+                                            ? Color(red: 0.48, green: 0.29, blue: 0.05)
+                                            : Color(red: 0.12, green: 0.08, blue: 0.04).opacity(0.2),
+                                        lineWidth: selection == item.id ? 2.5 : 1
+                                    )
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .id(item.id)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.viewAligned)
+        .scrollPosition(id: $scrollPosition)
+        .onAppear {
+            scrollPosition = selection
+        }
+        .onChange(of: selection) { _, value in
+            if scrollPosition != value {
+                scrollPosition = value
+            }
+        }
+    }
+}
+
+private struct BackgroundStylePreview: View {
+    let style: CicadaBackgroundStyle
+
+    var body: some View {
+        ZStack {
+            style.baseColor
+
+            if let textureAssetName = style.textureAssetName {
+                BundlePNGImage(name: textureAssetName)
+            }
+
+            LinearGradient(
+                colors: [.clear, Color.black.opacity(0.24)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+    }
+}
+
+private struct CicadaStylePreview: View {
+    let style: CicadaStyle
+
+    var body: some View {
+        ZStack {
+            Color.preferencePaperYellow
+
+            Capsule()
+                .fill(Color(red: 0.93, green: 0.79, blue: 0.51))
+                .frame(width: 9, height: 100)
+                .offset(x: 42, y: 31)
+
+            Path { path in
+                path.move(to: CGPoint(x: 68, y: 76))
+                path.addLine(to: CGPoint(x: 90, y: 32))
+            }
+            .stroke(Color(red: 0.62, green: 0.58, blue: 0.43), lineWidth: 1.5)
+
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(Color(red: 0.91, green: 0.75, blue: 0.43))
+                .frame(width: 44, height: 66)
+                .overlay(alignment: .top) {
+                    Rectangle()
+                        .fill(style.headColor)
+                        .frame(height: 9)
+                }
+                .overlay {
+                    HStack(spacing: 17) {
+                        Circle().fill(.black).frame(width: 6, height: 6)
+                        Circle().fill(.black).frame(width: 6, height: 6)
+                    }
+                    .offset(y: -5)
+                }
+                .overlay(alignment: .bottom) {
+                    HStack(spacing: 8) {
+                        CicadaPreviewWing(side: .left)
+                        CicadaPreviewWing(side: .right)
+                    }
+                    .offset(y: 28)
+                }
+                .offset(x: -12, y: 3)
+
+            VStack(spacing: 4) {
+                Circle().fill(style.beadColor).frame(width: 14, height: 14)
+                Circle().fill(style.beadColor).frame(width: 14, height: 14)
+            }
+            .offset(x: 43, y: -28)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+    }
+}
+
+
+private struct CicadaPreviewWing: View {
+    enum Side {
+        case left
+        case right
+    }
+
+    let side: Side
+
+    var body: some View {
+        CicadaPreviewWingShape()
+            .fill(Color(red: 1.0, green: 0.92, blue: 0.68))
+            .overlay {
+                CicadaPreviewWingShape()
+                    .stroke(Color.white.opacity(0.55), lineWidth: 1)
+            }
+            .frame(width: 20, height: 52)
+            .rotationEffect(.degrees(side == .left ? 7 : -7), anchor: .top)
+            .shadow(color: .black.opacity(0.12), radius: 2, y: 2)
+    }
+}
+
+private struct CicadaPreviewWingShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.maxY),
+            control1: CGPoint(x: rect.maxX + rect.width * 0.12, y: rect.minY + rect.height * 0.24),
+            control2: CGPoint(x: rect.maxX + rect.width * 0.12, y: rect.minY + rect.height * 0.78)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.minY),
+            control1: CGPoint(x: rect.minX - rect.width * 0.12, y: rect.minY + rect.height * 0.78),
+            control2: CGPoint(x: rect.minX - rect.width * 0.12, y: rect.minY + rect.height * 0.24)
+        )
+        path.closeSubpath()
+        return path
     }
 }
 
@@ -212,4 +409,9 @@ private struct CicadaAboutView: View {
                 .frame(height: 1)
         }
     }
+}
+
+
+private extension Color {
+    static let preferencePaperYellow = Color(red: 0.98, green: 0.89, blue: 0.66)
 }

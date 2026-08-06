@@ -10,6 +10,7 @@ struct CicadaToyView: View {
     let spinSpeedRatio: Double
     let wingSpread: Double
     let buzzLevel: Double
+    let style: CicadaStyle
 
     var body: some View {
         GeometryReader { proxy in
@@ -37,11 +38,11 @@ struct CicadaToyView: View {
             ZStack {
                 cord(from: center, to: cordAttachment)
 
-                bambooStick(height: height, center: center)
+                bambooStick(height: height, center: center, style: style)
 
-                cicadaBody(x: cicadaCenter.x, y: cicadaCenter.y, rotation: bodyRotation, scale: cicadaScale)
+                cicadaBody(x: cicadaCenter.x, y: cicadaCenter.y, rotation: bodyRotation, scale: cicadaScale, style: style)
 
-                beadPair(x: center.x, y: center.y)
+                beadPair(x: center.x, y: center.y, style: style)
             }
             .transaction { transaction in
                 transaction.animation = nil
@@ -56,7 +57,7 @@ struct CicadaToyView: View {
         )
     }
 
-    private func bambooStick(height: CGFloat, center: CGPoint) -> some View {
+    private func bambooStick(height: CGFloat, center: CGPoint, style _: CicadaStyle) -> some View {
         let stickLength = height - center.y + 72
         let stickCenterY = center.y + stickLength * 0.5 - 28
 
@@ -81,14 +82,14 @@ struct CicadaToyView: View {
         .stroke(Color(red: 0.62, green: 0.58, blue: 0.43), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
     }
 
-    private func beadPair(x: CGFloat, y: CGFloat) -> some View {
+    private func beadPair(x: CGFloat, y: CGFloat, style: CicadaStyle) -> some View {
         ZStack {
             VStack(spacing: 6) {
                 Circle()
-                    .fill(.red)
+                    .fill(style.beadColor)
                     .frame(width: 32, height: 32)
                 Circle()
-                    .fill(.red)
+                    .fill(style.beadColor)
                     .frame(width: 32, height: 32)
             }
         }
@@ -103,17 +104,25 @@ struct CicadaToyView: View {
         .position(x: x, y: y)
     }
 
-    private func cicadaBody(x: CGFloat, y: CGFloat, rotation: Double, scale: CGFloat) -> some View {
+    private func cicadaBody(x: CGFloat, y: CGFloat, rotation: Double, scale: CGFloat, style: CicadaStyle) -> some View {
         ZStack(alignment: .top) {
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(red: 0.91, green: 0.75, blue: 0.43))
                 .frame(width: 92, height: 166)
                 .overlay(alignment: .top) {
                     Rectangle()
-                        .fill(.red)
+                        .fill(style.headColor)
                         .frame(height: 16)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay {
+                    if let textureAssetName = style.bodyTextureAssetName {
+                        Image(textureAssetName)
+                            .resizable()
+                            .scaledToFill()
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    }
+                }
                 .shadow(color: .black.opacity(0.25), radius: 14, y: 10)
 
             HStack(spacing: 26) {

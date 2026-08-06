@@ -23,6 +23,8 @@ struct ContentView: View {
     @State private var windowSize: CGSize = .zero
     @StateObject private var displayLink = DisplayLinkDriver()
     @AppStorage(HapticStrength.storageKey) private var hapticStrengthRawValue = HapticStrength.medium.rawValue
+    @AppStorage(CicadaBackgroundStyle.storageKey) private var backgroundStyleRawValue = CicadaBackgroundStyle.bamboo.rawValue
+    @AppStorage(CicadaStyle.storageKey) private var cicadaStyleRawValue = CicadaStyle.red.rawValue
 
     private var language: AppLanguage {
         AppLanguage(locale: locale)
@@ -32,13 +34,21 @@ struct ContentView: View {
         HapticStrength(rawValue: hapticStrengthRawValue) ?? .medium
     }
 
+    private var backgroundStyle: CicadaBackgroundStyle {
+        CicadaBackgroundStyle(rawValue: backgroundStyleRawValue) ?? .bamboo
+    }
+
+    private var cicadaStyle: CicadaStyle {
+        CicadaStyle(rawValue: cicadaStyleRawValue) ?? .red
+    }
+
     var body: some View {
         NavigationStack {
             GeometryReader { proxy in
                 let canvasSize = windowSize == .zero ? proxy.size : windowSize
 
                 ZStack {
-                    BambooForestBackground(activity: motion.shakeIntensity)
+                    BambooForestBackground(activity: motion.shakeIntensity, style: backgroundStyle)
                         .frame(width: canvasSize.width, height: canvasSize.height)
                         .position(x: canvasSize.width * 0.5, y: canvasSize.height * 0.5)
 
@@ -46,7 +56,8 @@ struct ContentView: View {
                         orbitAngle: motion.orbitAngle,
                         spinSpeedRatio: motion.spinSpeedRatio,
                         wingSpread: motion.wingSpread,
-                        buzzLevel: motion.shakeIntensity
+                        buzzLevel: motion.shakeIntensity,
+                        style: cicadaStyle
                     )
                     .frame(width: canvasSize.width, height: canvasSize.height)
                     .position(x: canvasSize.width * 0.5, y: canvasSize.height * 0.5)
