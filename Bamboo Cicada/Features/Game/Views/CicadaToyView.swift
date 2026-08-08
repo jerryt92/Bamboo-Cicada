@@ -36,9 +36,9 @@ struct CicadaToyView: View {
             )
 
             ZStack {
-                cord(from: center, to: cordAttachment)
-
                 bambooStick(height: height, center: center, style: style)
+
+                cord(from: center, to: cordAttachment)
 
                 cicadaBody(x: cicadaCenter.x, y: cicadaCenter.y, rotation: bodyRotation, scale: cicadaScale, style: style)
 
