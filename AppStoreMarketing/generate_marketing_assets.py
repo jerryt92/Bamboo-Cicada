@@ -217,11 +217,11 @@ def main() -> None:
 
     specs = [
         ("zh_01_摇一摇听见夏天.png", "zh", "摇一摇，听见夏天", "竹林里的竹知了随手势旋转，发出近似鸣蝉的声音。", "game-zh.png", "中华民间声玩"),
-        ("zh_02_震动反馈跟随节奏.png", "zh", "震动反馈跟随节奏", "启动、旋转、加速，每一次节奏都有轻巧触感。", "game-zh.png", "Haptic Feedback"),
-        ("zh_03_中华传统民间童玩.png", "zh", "中华传统民间童玩", "竹、纸、细绳，把手上的节奏变成夏日声响。", "toy-closeup.png", "竹知了 · Bamboo Cicada"),
+        ("zh_02_震动反馈跟随节奏.png", "zh", "一枚会鸣叫的竹知了", "竹、纸与细绳，把轻轻摇动变成夏日声响。", "toy-closeup.png", "竹知了 · Bamboo Cicada"),
+        ("zh_03_中华传统民间童玩.png", "zh", "中华传统民间童玩", "从一页卷轴，认识竹知了的材料、声音与童年记忆。", "intro-zh.png", "竹知了 · Bamboo Cicada"),
         ("en_01_shake-to-hear-summer.png", "en", "Shake to Hear Summer", "Spin a bamboo cicada in a living bamboo forest.", "game-zh.png", "Chinese folk sound toy"),
-        ("en_02_haptics-follow-the-rhythm.png", "en", "Haptics Follow the Rhythm", "Feel start pulses, spinning motion, and beat-like vibration.", "game-zh.png", "Haptic Feedback"),
-        ("en_03_a-chinese-folk-toy.png", "en", "A Chinese Folk Toy", "Bamboo, paper, and cord turn hand rhythm into sound.", "toy-closeup.png", "Bamboo Cicada"),
+        ("en_02_haptics-follow-the-rhythm.png", "en", "A Folk Sound Toy", "Bamboo, paper, and cord turn a gentle shake into the sound of summer.", "toy-closeup.png", "Bamboo Cicada"),
+        ("en_03_a-chinese-folk-toy.png", "en", "A Chinese Folk Toy", "Discover the materials, sound, and memory behind the bamboo cicada.", "intro-en.png", "Bamboo Cicada"),
     ]
 
     generated: dict[tuple[str, str], Image.Image] = {}
