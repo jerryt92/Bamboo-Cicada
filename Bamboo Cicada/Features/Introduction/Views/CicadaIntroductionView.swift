@@ -353,6 +353,7 @@ private struct CicadaPreviewWingShape: Shape {
 
 private struct CicadaAboutView: View {
     let language: AppLanguage
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         VStack(spacing: 22) {
@@ -371,7 +372,13 @@ private struct CicadaAboutView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
 
-            aboutRow(title: language.versionTitle, value: appVersionText)
+            Button {
+                openAppStore()
+            } label: {
+                aboutRow(title: language.versionTitle, value: appVersionText, showsChevron: true)
+            }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
         }
         .padding(.top, 64)
         .padding(.horizontal, 54)
@@ -390,7 +397,12 @@ private struct CicadaAboutView: View {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
     }
 
-    private func aboutRow(title: String, value: String) -> some View {
+    private func openAppStore() {
+        guard let url = URL(string: "https://apps.apple.com/cn/app/id6797866440") else { return }
+        openURL(url)
+    }
+
+    private func aboutRow(title: String, value: String, showsChevron: Bool = false) -> some View {
         HStack(spacing: 12) {
             Text(title)
                 .font(.system(size: 18, weight: .semibold, design: .serif))
@@ -401,6 +413,12 @@ private struct CicadaAboutView: View {
             Text(value)
                 .font(.system(size: 18, weight: .semibold, design: .serif))
                 .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05).opacity(0.62))
+
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05).opacity(0.38))
+            }
         }
         .padding(.vertical, 14)
         .overlay(alignment: .top) {
