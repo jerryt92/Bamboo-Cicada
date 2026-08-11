@@ -47,8 +47,9 @@ enum CicadaBackgroundStyle: String, CaseIterable, Identifiable {
 
 enum CicadaStyle: String, CaseIterable, Identifiable {
     case red
-    case purple
     case gold
+    case skyBlue
+    case purple
     case orange
     case black
 
@@ -63,8 +64,9 @@ enum CicadaStyle: String, CaseIterable, Identifiable {
     var accentColor: Color {
         switch self {
         case .red: .red
-        case .purple: Color(red: 0.30, green: 0.10, blue: 0.42)
         case .gold: Color(red: 0.95, green: 0.68, blue: 0.08)
+        case .skyBlue: Color(red: 0.20, green: 0.55, blue: 0.90)
+        case .purple: Color(red: 0.30, green: 0.10, blue: 0.42)
         case .orange: Color(red: 0.95, green: 0.3, blue: 0.06)
         case .black: Color(red: 0.16, green: 0.17, blue: 0.19)
         }

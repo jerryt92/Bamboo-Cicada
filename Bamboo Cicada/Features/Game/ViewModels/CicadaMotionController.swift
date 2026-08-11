@@ -16,6 +16,8 @@ final class CicadaMotionController: ObservableObject {
     @Published var audioPulseID = 0
     @Published var audioPulsePeriod: TimeInterval = CicadaTuning.minimumAudioPulsePeriod
     @Published var audioPlaybackRate: Double = 1.0
+    // 归一化角速度 [0, 1]：无视重力/加速度来源，纯由角速度统一驱动所有音频参数。
+    @Published var normalizedAngularVelocity: Double = 0
     @Published var spinStartPulseID = 0
     @Published var frictionHapticPulseID = 0
     @Published var frictionHapticLevel: Double = 0
@@ -125,6 +127,7 @@ final class CicadaMotionController: ObservableObject {
         audioPulseID = 0
         audioPulsePeriod = CicadaTuning.minimumAudioPulsePeriod
         audioPlaybackRate = 1.0
+        normalizedAngularVelocity = 0
         spinStartPulseID = 0
         frictionHapticPulseID = 0
         frictionHapticLevel = 0
@@ -185,6 +188,8 @@ final class CicadaMotionController: ObservableObject {
             ? 0
             : abs(angularVelocity)
         spinSpeedRatio = min(1, effectiveAngularSpeed / maximumVelocity)
+        // 归一化角速度统一驱动所有音频参数（无视重力分量/加速度来源）
+        normalizedAngularVelocity = spinSpeedRatio
         audioPlaybackRate = spinSpeedRatio * CicadaTuning.maximumAudioPlaybackRate
 
         if effectiveAngularSpeed > 0 {

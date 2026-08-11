@@ -38,6 +38,11 @@ final class CicadaBuzzer: ObservableObject {
     private var interruptionObserver: NSObjectProtocol?
     private let audioStartOffset: TimeInterval = 0
     private let playerPoolSize = 12
+    private let coalesceQueue = DispatchQueue(label: "Bamboo Cicada Coalesce", qos: .userInitiated)
+    private var pendingRate: Double = 0
+    private var pendingCount: Int = 0
+    private var isCoalesceScheduled = false
+    private var coalesceGeneration = 0
     private var currentAudioSelection: AudioSelection {
         if let raw = UserDefaults.standard.string(forKey: AudioSelection.storageKey),
            let selection = AudioSelection(rawValue: raw) {
@@ -86,6 +91,7 @@ final class CicadaBuzzer: ObservableObject {
             return
         }
         guard wasRunning else { return }
+        cancelCoalescedPulses()
         audioQueue.async { [weak self] in
             guard let self else { return }
             self.players.forEach { player in
@@ -171,6 +177,7 @@ final class CicadaBuzzer: ObservableObject {
 
     func stop() {
         guard isRunning else { return }
+        cancelCoalescedPulses()
         audioQueue.async { [weak self] in
             guard let self else { return }
             self.players.forEach { player in
@@ -206,32 +213,54 @@ final class CicadaBuzzer: ObservableObject {
     }
 
     func playPulse(rate: Double) {
-        audioQueue.async { [weak self] in
-            self?.playPulseOnAudioQueue(rate: rate)
-        }
-    }
-
-    private func playPulseOnAudioQueue(rate: Double) {
-        guard isRunning, let playerIndex = nextAvailablePlayerIndex() else { return }
-
-        let player = players[playerIndex]
-        let playbackRate = clampedPlaybackRate(rate)
-        player.currentTime = min(audioStartOffset, max(0, player.duration - 0.01))
-        player.volume = 1
-        player.rate = Float(playbackRate)
-        player.play()
-        nextPlayerIndex = (playerIndex + 1) % players.count
+        scheduleCoalescedPulse(rate: rate, count: 1)
     }
 
     func playPulses(count: Int, rate: Double) {
         guard count > 0 else { return }
+        scheduleCoalescedPulse(rate: rate, count: count)
+    }
 
-        let pulseCount = min(count, 8)
-        audioQueue.async { [weak self] in
+    private func scheduleCoalescedPulse(rate: Double, count: Int) {
+        let normalizedRate = min(1.0, max(0.0, rate * CicadaTuning.audioPlaybackRateMultiplier))
+        guard normalizedRate > 0 else { return }
+
+        coalesceQueue.async { [weak self] in
             guard let self else { return }
-            for _ in 0..<pulseCount {
-                self.playPulseOnAudioQueue(rate: rate)
+            self.pendingRate = max(self.pendingRate, normalizedRate)
+            self.pendingCount = max(self.pendingCount, count)
+            guard !self.isCoalesceScheduled else { return }
+
+            self.isCoalesceScheduled = true
+            let captureGen = self.coalesceGeneration
+            let window = CicadaTuning.audioPulseCoalesceWindow
+            self.coalesceQueue.asyncAfter(deadline: .now() + window) { [weak self] in
+                guard let self, captureGen == self.coalesceGeneration else { return }
+                let rate = self.pendingRate
+                let count = self.pendingCount
+                self.pendingRate = 0
+                self.pendingCount = 0
+                self.isCoalesceScheduled = false
+                self.audioQueue.async {
+                    self.playCoalescedPulse(rate: rate, count: count)
+                }
             }
+        }
+    }
+
+    private func playCoalescedPulse(rate: Double, count: Int) {
+        guard isRunning else { return }
+        let (playbackRate, targetVolume) = clampedPlaybackRate(rate)
+        let pulseCount = min(count, 8)
+        for _ in 0..<pulseCount {
+            guard let idx = nextAvailablePlayerIndex() else { break }
+            let player = players[idx]
+            player.currentTime = min(audioStartOffset, max(0, player.duration - 0.01))
+            player.volume = 0
+            player.rate = Float(playbackRate)
+            player.play()
+            player.setVolume(Float(targetVolume), fadeDuration: CicadaTuning.audioPulseFadeDuration)
+            nextPlayerIndex = (idx + 1) % players.count
         }
     }
 
@@ -280,9 +309,32 @@ final class CicadaBuzzer: ObservableObject {
         return nil
     }
 
-    private func clampedPlaybackRate(_ rate: Double) -> Double {
-        let multipliedRate = rate * CicadaTuning.audioPlaybackRateMultiplier
-        return min(CicadaTuning.maximumAudioPlaybackRate, max(0.5, multipliedRate))
+    /// 将归一化角速度 [0, 1] 映射为播放速率和音量。
+    /// 曲线：log1p(curve * x) / log1p(curve)，与触感相同，保证声音和震动同步自然。
+    /// 返回 (播放速率, 目标音量 0…1)
+    private func clampedPlaybackRate(_ rate: Double) -> (rate: Double, volume: Double) {
+        let normalized = min(1.0, max(0.0, rate * CicadaTuning.audioPlaybackRateMultiplier))
+        let curve = CicadaTuning.audioLogarithmicCurve
+        let mapped = log1p(curve * normalized) / log1p(curve)
+
+        let minRate = CicadaTuning.audioMinimumPlaybackRate
+        let maxRate = CicadaTuning.maximumAudioPlaybackRate
+        let playbackRate = minRate + (maxRate - minRate) * mapped
+
+        let minVol = CicadaTuning.audioMinimumVolume
+        let volume = minVol + (1.0 - minVol) * mapped
+
+        return (rate: playbackRate, volume: volume)
+    }
+
+    private func cancelCoalescedPulses() {
+        coalesceGeneration += 1
+        coalesceQueue.async { [weak self] in
+            guard let self else { return }
+            self.pendingRate = 0
+            self.pendingCount = 0
+            self.isCoalesceScheduled = false
+        }
     }
 
     private func resumeAfterInterruption() {

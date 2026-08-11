@@ -126,7 +126,7 @@ struct ContentView: View {
         .onReceive(displayLink.$tick) { _ in
             guard isGameRunning else { return }
             motion.settleMotion(frameInterval: displayLink.frameInterval)
-            buzzer.syncMotion(rate: motion.audioPlaybackRate, isMoving: motion.spinSpeedRatio > 0)
+            buzzer.syncMotion(rate: motion.normalizedAngularVelocity, isMoving: motion.spinSpeedRatio > 0)
             if motion.spinStartPulseID != lastStartPulseID {
                 lastStartPulseID = motion.spinStartPulseID
                 if isHapticsActive {
@@ -143,7 +143,7 @@ struct ContentView: View {
                         haptics.phasePulse(speedRatio: motion.spinSpeedRatio, count: pulseCount, strength: hapticStrength)
                     }
                 }
-                buzzer.playPulses(count: pulseCount, rate: motion.audioPlaybackRate)
+                buzzer.playPulses(count: pulseCount, rate: motion.normalizedAngularVelocity)
             }
             if motion.frictionHapticPulseID != lastFrictionHapticPulseID {
                 lastFrictionHapticPulseID = motion.frictionHapticPulseID

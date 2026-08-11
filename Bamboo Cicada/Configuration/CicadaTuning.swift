@@ -60,6 +60,20 @@ enum CicadaTuning {
     // 声音播放速度上限，避免高速摆动时音频变得过快。
     static var maximumAudioPlaybackRate = 1.0
 
+    // 转速映射到音频速率/音量的对数曲线。越大，低速声音越容易被感知。
+    // 参数与触感 hapticIntensityLogarithmicCurve 一致，保证声音和震动同步自然。
+    static let audioLogarithmicCurve = 9.0
+
+    // 允许的最低播放速率 / 最低音量。AVAudioPlayer 硬件下限 0.5。
+    static let audioMinimumPlaybackRate = 0.5
+    static let audioMinimumVolume = 0.25
+
+    // 音频脉冲合并窗口（秒）。该时间内连续请求合并为一次播放，避免高频脉冲扎堆刺耳。
+    static let audioPulseCoalesceWindow: TimeInterval = 0.035
+
+    // 每颗脉冲的淡入时间（秒），让声音平滑渐入而非瞬时爆发。
+    static let audioPulseFadeDuration: TimeInterval = 0.012
+
     // 启动时只 prepare 一部分播放器，不播放音频，确保冷启动完全静音。
     static let audioPrewarmPlayerCount = 4
 

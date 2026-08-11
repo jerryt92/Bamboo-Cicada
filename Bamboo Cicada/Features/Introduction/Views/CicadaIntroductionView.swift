@@ -137,7 +137,7 @@ private struct CicadaPreferencesView: View {
                         .font(.system(size: 20, weight: .semibold, design: .serif))
                         .foregroundStyle(sectionTextColor)
 
-                    Picker(language.audioSelectionTitle, selection: $audioSelectionRawValue) {
+                    Picker("Audio", selection: $audioSelectionRawValue) {
                         ForEach(AudioSelection.allCases) { selection in
                             Text(language.audioSelectionTitle(for: selection))
                                 .tag(selection.rawValue)
@@ -145,21 +145,20 @@ private struct CicadaPreferencesView: View {
                     }
                     .pickerStyle(.segmented)
                     .tint(.preferencePaperYellow)
-                    .accessibilityLabel(language.audioSelectionTitle)
 
                     Button {
                         let selection = AudioSelection(rawValue: audioSelectionRawValue) ?? .wawawa1
                         CicadaBuzzer.preview(selection)
                     } label: {
-                        Label(language.previewTitle, systemImage: "speaker.wave.2.fill")
-                            .font(.system(size: 16, weight: .semibold, design: .serif))
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.system(size: 18))
                             .foregroundStyle(sectionTextColor)
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 20)
+                            .frame(width: 42, height: 42)
                             .background(Color.preferencePaperYellow.opacity(0.7))
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Preview")
                 }
 
                 VStack(alignment: .leading, spacing: 16) {
@@ -300,12 +299,6 @@ private struct CicadaStylePreview: View {
                 .fill(Color(red: 0.93, green: 0.79, blue: 0.51))
                 .frame(width: 9, height: 100)
                 .offset(x: 42, y: 31)
-
-            Path { path in
-                path.move(to: CGPoint(x: 68, y: 76))
-                path.addLine(to: CGPoint(x: 90, y: 32))
-            }
-            .stroke(Color(red: 0.62, green: 0.58, blue: 0.43), lineWidth: 1.5)
 
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .fill(Color(red: 0.91, green: 0.75, blue: 0.43))

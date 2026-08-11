@@ -229,29 +229,18 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
     func audioSelectionTitle(for selection: AudioSelection) -> String {
         switch (self, selection) {
-        case (.zh, .wawawa1): "知了声一"
-        case (.zh, .wawawa2): "知了声二"
-        case (.zhHant, .wawawa1): "知了聲一"
-        case (.zhHant, .wawawa2): "知了聲二"
-        case (.en, .wawawa1): "Cicada Sound 1"
-        case (.en, .wawawa2): "Cicada Sound 2"
-        case (.ja, .wawawa1): "蝉の声 1"
-        case (.ja, .wawawa2): "蝉の声 2"
-        case (.ko, .wawawa1): "매미 소리 1"
-        case (.ko, .wawawa2): "매미 소리 2"
-        case (.fr, .wawawa1): "Cigale son 1"
-        case (.fr, .wawawa2): "Cigale son 2"
-        }
-    }
-
-    var previewTitle: String {
-        switch self {
-        case .zh: "预览"
-        case .zhHant: "預覽"
-        case .en: "Preview"
-        case .ja: "プレビュー"
-        case .ko: "미리듣기"
-        case .fr: "Aperçu"
+        case (.zh, .wawawa1): "声音一"
+        case (.zh, .wawawa2): "声音二"
+        case (.zhHant, .wawawa1): "聲音一"
+        case (.zhHant, .wawawa2): "聲音二"
+        case (.en, .wawawa1): "Sound 1"
+        case (.en, .wawawa2): "Sound 2"
+        case (.ja, .wawawa1): "サウンド1"
+        case (.ja, .wawawa2): "サウンド2"
+        case (.ko, .wawawa1): "소리 1"
+        case (.ko, .wawawa2): "소리 2"
+        case (.fr, .wawawa1): "Son 1"
+        case (.fr, .wawawa2): "Son 2"
         }
     }
 
