@@ -7,8 +7,26 @@ import AVFoundation
 import Combine
 import Foundation
 
+enum AudioSelection: String, CaseIterable, Identifiable {
+    case wawawa1
+    case wawawa2
+
+    static let storageKey = "audioSelection"
+
+    var id: String { rawValue }
+
+    var assetName: String {
+        switch self {
+        case .wawawa1: "WawawaUnit1"
+        case .wawawa2: "WawawaUnit2"
+        }
+    }
+}
+
 final class CicadaBuzzer: ObservableObject {
     @Published var statusText = "音频准备中"
+
+    private static var lastPreviewPlayer: AVAudioPlayer?
 
     private var players: [AVAudioPlayer] = []
     private let audioQueue = DispatchQueue(label: "Bamboo Cicada Audio", qos: .userInitiated)
@@ -20,6 +38,28 @@ final class CicadaBuzzer: ObservableObject {
     private var interruptionObserver: NSObjectProtocol?
     private let audioStartOffset: TimeInterval = 0
     private let playerPoolSize = 12
+    private var currentAudioSelection: AudioSelection {
+        if let raw = UserDefaults.standard.string(forKey: AudioSelection.storageKey),
+           let selection = AudioSelection(rawValue: raw) {
+            return selection
+        }
+        return .wawawa1
+    }
+
+    static func preview(_ selection: AudioSelection) {
+        guard let url = Bundle.main.url(forResource: selection.assetName, withExtension: "m4a") else { return }
+        do {
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.numberOfLoops = 0
+            player.enableRate = true
+            player.rate = 1.0
+            player.volume = 0.8
+            player.play()
+            lastPreviewPlayer = player
+        } catch {
+            print("预览失败: \(error.localizedDescription)")
+        }
+    }
 
     func start() {
         guard !isRunning else {
@@ -32,24 +72,51 @@ final class CicadaBuzzer: ObservableObject {
         installAudioObservers()
 
         if players.isEmpty,
-           let url = Bundle.main.url(forResource: "WawawaUnit", withExtension: "m4a") {
-            do {
-                players = try (0..<playerPoolSize).map { _ in
-                    let audioPlayer = try AVAudioPlayer(contentsOf: url)
-                    audioPlayer.numberOfLoops = 0
-                    audioPlayer.enableRate = true
-                    audioPlayer.rate = 1
-                    audioPlayer.volume = 1
-                    audioPlayer.prepareToPlay()
-                    return audioPlayer
-                }
-                prewarmAudioHardware()
-                updateStatus(triggered: false)
-            } catch {
-                statusText = "音频加载失败: \(error.localizedDescription)"
-            }
+           let url = Bundle.main.url(forResource: currentAudioSelection.assetName, withExtension: "m4a") {
+            loadPlayers(from: url)
         } else if players.isEmpty {
             statusText = "找不到音频文件"
+        }
+    }
+
+    func reload(with selection: AudioSelection) {
+        let wasRunning = isRunning
+        guard let url = Bundle.main.url(forResource: selection.assetName, withExtension: "m4a") else {
+            statusText = "找不到音频文件"
+            return
+        }
+        guard wasRunning else { return }
+        audioQueue.async { [weak self] in
+            guard let self else { return }
+            self.players.forEach { player in
+                player.stop()
+                player.currentTime = 0
+            }
+            self.players.removeAll()
+            self.nextPlayerIndex = 0
+            self.hasSyncedIdle = true
+            self.hasPrewarmedAudioHardware = false
+            self.loadPlayers(from: url)
+            self.prewarmAudioHardware()
+            self.updateStatus(triggered: false)
+        }
+    }
+
+    private func loadPlayers(from url: URL) {
+        do {
+            players = try (0..<playerPoolSize).map { _ in
+                let audioPlayer = try AVAudioPlayer(contentsOf: url)
+                audioPlayer.numberOfLoops = 0
+                audioPlayer.enableRate = true
+                audioPlayer.rate = 1
+                audioPlayer.volume = 1
+                audioPlayer.prepareToPlay()
+                return audioPlayer
+            }
+            prewarmAudioHardware()
+            updateStatus(triggered: false)
+        } catch {
+            statusText = "音频加载失败: \(error.localizedDescription)"
         }
     }
 

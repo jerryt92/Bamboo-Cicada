@@ -25,6 +25,7 @@ struct ContentView: View {
     @AppStorage(HapticStrength.storageKey) private var hapticStrengthRawValue = HapticStrength.medium.rawValue
     @AppStorage(CicadaBackgroundStyle.storageKey) private var backgroundStyleRawValue = CicadaBackgroundStyle.bamboo.rawValue
     @AppStorage(CicadaStyle.storageKey) private var cicadaStyleRawValue = CicadaStyle.red.rawValue
+    @AppStorage(AudioSelection.storageKey) private var audioSelectionRawValue = AudioSelection.wawawa1.rawValue
 
     private var language: AppLanguage {
         AppLanguage(locale: locale)
@@ -32,6 +33,14 @@ struct ContentView: View {
 
     private var hapticStrength: HapticStrength {
         HapticStrength(rawValue: hapticStrengthRawValue) ?? .medium
+    }
+
+    private var isHapticsActive: Bool {
+        CicadaTuning.isMotionHapticsEnabled && hapticStrength != .off
+    }
+
+    private var isFrictionHapticsActive: Bool {
+        CicadaTuning.isMotionHapticsEnabled && hapticStrength != .off
     }
 
     private var backgroundStyle: CicadaBackgroundStyle {
@@ -111,13 +120,16 @@ struct ContentView: View {
                 startGame(wakeHaptics: false)
             }
         }
+        .onChange(of: audioSelectionRawValue) { _, _ in
+            buzzer.reload(with: AudioSelection(rawValue: audioSelectionRawValue) ?? .wawawa1)
+        }
         .onReceive(displayLink.$tick) { _ in
             guard isGameRunning else { return }
             motion.settleMotion(frameInterval: displayLink.frameInterval)
             buzzer.syncMotion(rate: motion.audioPlaybackRate, isMoving: motion.spinSpeedRatio > 0)
             if motion.spinStartPulseID != lastStartPulseID {
                 lastStartPulseID = motion.spinStartPulseID
-                if CicadaTuning.isMotionHapticsEnabled {
+                if isHapticsActive {
                     Task { @MainActor in
                         haptics.startPulse(speedRatio: motion.spinSpeedRatio, strength: hapticStrength)
                     }
@@ -126,7 +138,7 @@ struct ContentView: View {
             if motion.audioPulseID != lastAudioPulseID {
                 let pulseCount = motion.audioPulseID - lastAudioPulseID
                 lastAudioPulseID = motion.audioPulseID
-                if CicadaTuning.isMotionHapticsEnabled {
+                if isHapticsActive {
                     Task { @MainActor in
                         haptics.phasePulse(speedRatio: motion.spinSpeedRatio, count: pulseCount, strength: hapticStrength)
                     }
@@ -135,7 +147,7 @@ struct ContentView: View {
             }
             if motion.frictionHapticPulseID != lastFrictionHapticPulseID {
                 lastFrictionHapticPulseID = motion.frictionHapticPulseID
-                if CicadaTuning.isMotionHapticsEnabled {
+                if isFrictionHapticsActive {
                     Task { @MainActor in
                         haptics.phasePulse(
                             speedRatio: max(motion.spinSpeedRatio, motion.frictionHapticLevel),

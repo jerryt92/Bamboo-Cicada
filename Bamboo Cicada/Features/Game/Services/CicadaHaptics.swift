@@ -9,6 +9,7 @@ import QuartzCore
 import UIKit
 
 enum HapticStrength: String, CaseIterable, Identifiable {
+    case off
     case gentle
     case medium
     case strong
@@ -19,6 +20,7 @@ enum HapticStrength: String, CaseIterable, Identifiable {
 
     var multiplier: Double {
         switch self {
+        case .off: 0
         case .gentle: 0.65
         case .medium: 1.0
         case .strong: 1.3

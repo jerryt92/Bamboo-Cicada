@@ -127,10 +127,41 @@ private struct CicadaPreferencesView: View {
     @AppStorage(HapticStrength.storageKey) private var hapticStrengthRawValue = HapticStrength.medium.rawValue
     @AppStorage(CicadaBackgroundStyle.storageKey) private var backgroundStyleRawValue = CicadaBackgroundStyle.bamboo.rawValue
     @AppStorage(CicadaStyle.storageKey) private var cicadaStyleRawValue = CicadaStyle.red.rawValue
+    @AppStorage(AudioSelection.storageKey) private var audioSelectionRawValue = AudioSelection.wawawa1.rawValue
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(language.audioSelectionTitle)
+                        .font(.system(size: 20, weight: .semibold, design: .serif))
+                        .foregroundStyle(sectionTextColor)
+
+                    Picker(language.audioSelectionTitle, selection: $audioSelectionRawValue) {
+                        ForEach(AudioSelection.allCases) { selection in
+                            Text(language.audioSelectionTitle(for: selection))
+                                .tag(selection.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .tint(.preferencePaperYellow)
+                    .accessibilityLabel(language.audioSelectionTitle)
+
+                    Button {
+                        let selection = AudioSelection(rawValue: audioSelectionRawValue) ?? .wawawa1
+                        CicadaBuzzer.preview(selection)
+                    } label: {
+                        Label(language.previewTitle, systemImage: "speaker.wave.2.fill")
+                            .font(.system(size: 16, weight: .semibold, design: .serif))
+                            .foregroundStyle(sectionTextColor)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 20)
+                            .background(Color.preferencePaperYellow.opacity(0.7))
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 VStack(alignment: .leading, spacing: 16) {
                     Text(language.hapticStrengthTitle)
                         .font(.system(size: 20, weight: .semibold, design: .serif))

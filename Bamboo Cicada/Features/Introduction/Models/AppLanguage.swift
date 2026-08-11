@@ -160,21 +160,27 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
     func hapticStrengthTitle(for strength: HapticStrength) -> String {
         switch (self, strength) {
+        case (.zh, .off): "关"
         case (.zh, .gentle): "弱"
         case (.zh, .medium): "适中"
         case (.zh, .strong): "强"
+        case (.zhHant, .off): "關"
         case (.zhHant, .gentle): "弱"
         case (.zhHant, .medium): "適中"
         case (.zhHant, .strong): "強"
+        case (.en, .off): "Off"
         case (.en, .gentle): "Gentle"
         case (.en, .medium): "Medium"
         case (.en, .strong): "Strong"
+        case (.ja, .off): "オフ"
         case (.ja, .gentle): "弱"
         case (.ja, .medium): "標準"
         case (.ja, .strong): "強"
+        case (.ko, .off): "끄기"
         case (.ko, .gentle): "약함"
         case (.ko, .medium): "보통"
         case (.ko, .strong): "강함"
+        case (.fr, .off): "Arrêt"
         case (.fr, .gentle): "Faible"
         case (.fr, .medium): "Moyenne"
         case (.fr, .strong): "Forte"
@@ -183,24 +189,69 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
     func hapticStrengthSegmentTitle(for strength: HapticStrength) -> String {
         switch (self, strength) {
+        case (.zh, .off): "关"
         case (.zh, .gentle): "弱"
         case (.zh, .medium): "适中"
         case (.zh, .strong): "强"
+        case (.zhHant, .off): "關"
         case (.zhHant, .gentle): "弱"
         case (.zhHant, .medium): "適中"
         case (.zhHant, .strong): "強"
+        case (.en, .off): "Off"
         case (.en, .gentle): "Gentle"
         case (.en, .medium): "Medium"
         case (.en, .strong): "Strong"
+        case (.ja, .off): "オフ"
         case (.ja, .gentle): "弱"
         case (.ja, .medium): "標準"
         case (.ja, .strong): "強"
+        case (.ko, .off): "끄기"
         case (.ko, .gentle): "약함"
         case (.ko, .medium): "보통"
         case (.ko, .strong): "강함"
+        case (.fr, .off): "Arrêt"
         case (.fr, .gentle): "Faible"
         case (.fr, .medium): "Moyenne"
         case (.fr, .strong): "Forte"
+        }
+    }
+
+    var audioSelectionTitle: String {
+        switch self {
+        case .zh: "声音"
+        case .zhHant: "聲音"
+        case .en: "Sound"
+        case .ja: "サウンド"
+        case .ko: "소리"
+        case .fr: "Son"
+        }
+    }
+
+    func audioSelectionTitle(for selection: AudioSelection) -> String {
+        switch (self, selection) {
+        case (.zh, .wawawa1): "知了声一"
+        case (.zh, .wawawa2): "知了声二"
+        case (.zhHant, .wawawa1): "知了聲一"
+        case (.zhHant, .wawawa2): "知了聲二"
+        case (.en, .wawawa1): "Cicada Sound 1"
+        case (.en, .wawawa2): "Cicada Sound 2"
+        case (.ja, .wawawa1): "蝉の声 1"
+        case (.ja, .wawawa2): "蝉の声 2"
+        case (.ko, .wawawa1): "매미 소리 1"
+        case (.ko, .wawawa2): "매미 소리 2"
+        case (.fr, .wawawa1): "Cigale son 1"
+        case (.fr, .wawawa2): "Cigale son 2"
+        }
+    }
+
+    var previewTitle: String {
+        switch self {
+        case .zh: "预览"
+        case .zhHant: "預覽"
+        case .en: "Preview"
+        case .ja: "プレビュー"
+        case .ko: "미리듣기"
+        case .fr: "Aperçu"
         }
     }
 
