@@ -10,7 +10,7 @@ struct CicadaIntroductionView: View {
     @Binding var isPresented: Bool
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 22) {
                     Text(language.title)
@@ -77,7 +77,6 @@ struct CicadaIntroductionView: View {
                 ScrollPaperBackground()
                     .ignoresSafeArea()
             }
-            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(role: .cancel) {
@@ -88,8 +87,8 @@ struct CicadaIntroductionView: View {
                     .accessibilityLabel(language.closeTitle)
                 }
             }
-            .toolbarBackground(.hidden, for: .navigationBar)
         }
+        .navigationViewStyle(.stack)
         .background {
             ScrollPaperBackground()
                 .ignoresSafeArea()
@@ -202,7 +201,6 @@ private struct CicadaPreferencesView: View {
         }
         .navigationTitle(language.preferenceTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
     }
 
     private var sectionTextColor: Color {
@@ -214,16 +212,14 @@ private struct AppearanceCarousel<Item: Identifiable, Preview: View>: View where
     let items: [Item]
     @Binding var selection: String
     @ViewBuilder let preview: (Item) -> Preview
-    @State private var scrollPosition: String?
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 12) {
                 ForEach(items) { item in
                     Button {
-                        selection = item.id
-                        withAnimation(.snappy) {
-                            scrollPosition = item.id
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selection = item.id
                         }
                     } label: {
                         preview(item)
@@ -249,19 +245,7 @@ private struct AppearanceCarousel<Item: Identifiable, Preview: View>: View where
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     .buttonStyle(.plain)
-                    .id(item.id)
                 }
-            }
-            .scrollTargetLayout()
-        }
-        .scrollTargetBehavior(.viewAligned)
-        .scrollPosition(id: $scrollPosition)
-        .onAppear {
-            scrollPosition = selection
-        }
-        .onChange(of: selection) { _, value in
-            if scrollPosition != value {
-                scrollPosition = value
             }
         }
     }
@@ -407,14 +391,12 @@ private struct CicadaAboutView: View {
         .padding(.top, 64)
         .padding(.horizontal, 54)
         .frame(maxWidth: 640, maxHeight: .infinity, alignment: .top)
-        .scrollContentBackground(.hidden)
         .background {
             ScrollPaperBackground()
                 .ignoresSafeArea()
         }
         .navigationTitle(language.aboutTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
     }
 
     private var appVersionText: String {

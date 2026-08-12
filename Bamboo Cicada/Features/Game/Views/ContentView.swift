@@ -52,7 +52,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             GeometryReader { proxy in
                 let canvasSize = windowSize == .zero ? proxy.size : windowSize
 
@@ -88,8 +88,8 @@ struct ContentView: View {
                     .accessibilityLabel(language.introductionButtonAccessibility)
                 }
             }
-            .toolbarBackground(.hidden, for: .navigationBar)
         }
+        .navigationViewStyle(.stack)
         .background(Color(red: 0.08, green: 0.25, blue: 0.17))
         .ignoresSafeArea(.all)
         .statusBarHidden(true)
@@ -98,7 +98,6 @@ struct ContentView: View {
                 language: language,
                 isPresented: $isShowingIntroduction
             )
-            .presentationBackground(.clear)
         }
         .onAppear {
             startGame(wakeHaptics: true)
@@ -106,21 +105,21 @@ struct ContentView: View {
         .onDisappear {
             stopGame()
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase) { phase in
             if phase == .active, !isShowingIntroduction {
                 UIApplication.shared.isIdleTimerDisabled = true
                 buzzer.restoreAudioSession()
                 haptics.prepare()
             }
         }
-        .onChange(of: isShowingIntroduction) { _, isPresented in
+        .onChange(of: isShowingIntroduction) { isPresented in
             if isPresented {
                 pauseGameForPresentation()
             } else {
                 startGame(wakeHaptics: false)
             }
         }
-        .onChange(of: audioSelectionRawValue) { _, _ in
+        .onChange(of: audioSelectionRawValue) { _ in
             buzzer.reload(with: AudioSelection(rawValue: audioSelectionRawValue) ?? .wawawa1)
         }
         .onReceive(displayLink.$tick) { _ in

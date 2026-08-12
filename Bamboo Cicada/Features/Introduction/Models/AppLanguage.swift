@@ -21,7 +21,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
     init(locale: Locale) {
         let preferredLanguage = Bundle.main.preferredLocalizations.first
-        let languageCode = preferredLanguage ?? locale.language.languageCode?.identifier ?? "zh"
+        let languageCode = preferredLanguage ?? locale.languageCode ?? "zh"
         let resolvedLanguage: AppLanguage
         if languageCode.hasPrefix("ja") {
             resolvedLanguage = .ja

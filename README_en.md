@@ -17,7 +17,7 @@ Bamboo Cicada is a small SwiftUI iOS app that recreates the traditional Chinese 
 ## Requirements
 
 - Xcode 16 or later
-- iOS 17.6 or later
+- iOS 15.0 or later
 - A physical iPhone is recommended for motion, audio, and haptic testing
 
 The app can build and run in Simulator, but the main interaction is designed around real device motion.
