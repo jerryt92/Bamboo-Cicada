@@ -265,4 +265,26 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         case .fr: "Version"
         }
     }
+
+    var moreAppsTitle: String {
+        switch self {
+        case .zh: "更多 App"
+        case .zhHant: "更多 App"
+        case .en: "More Apps"
+        case .ja: "他のアプリ"
+        case .ko: "다른 앱"
+        case .fr: "Plus d'apps"
+        }
+    }
+
+    var photoTransferSubtitle: String {
+        switch self {
+        case .zh: "让实况照片和视频在文件 App 和照片 App 间快捷地传输"
+        case .zhHant: "讓原況照片和影片在檔案 App 和照片 App 間快速傳輸"
+        case .en: "Transfer Live Photos and videos quickly between Files and Photos"
+        case .ja: "ライブ写真と動画をファイル App と写真 App の間ですばやく転送"
+        case .ko: "실시간 사진과 동영상을 파일 앱과 사진 앱 간에 빠르게 전송"
+        case .fr: "Transférez rapidement Live Photos et vidéos entre Fichiers et Photos"
+        }
+    }
 }

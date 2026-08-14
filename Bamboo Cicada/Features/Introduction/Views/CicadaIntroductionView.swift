@@ -359,6 +359,14 @@ private struct CicadaPreviewWingShape: Shape {
     }
 }
 
+private struct MoreApp: Identifiable {
+    let id = UUID()
+    let iconName: String
+    let name: String
+    let subtitle: String
+    let storeURL: URL
+}
+
 private struct CicadaAboutView: View {
     let language: AppLanguage
     @Environment(\.openURL) private var openURL
@@ -376,6 +384,10 @@ private struct CicadaAboutView: View {
                             .stroke(Color(red: 0.98, green: 0.88, blue: 0.62).opacity(0.72), lineWidth: 1)
                     }
                     .shadow(color: Color(red: 0.12, green: 0.08, blue: 0.04).opacity(0.22), radius: 10, y: 4)
+
+                Text("© 2026 jerryt92.")
+                    .font(.system(size: 13, weight: .regular, design: .serif))
+                    .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05).opacity(0.5))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
@@ -387,6 +399,29 @@ private struct CicadaAboutView: View {
             }
             .buttonStyle(.plain)
             .contentShape(Rectangle())
+
+            VStack(spacing: 0) {
+                Text(language.moreAppsTitle)
+                    .font(.system(size: 15, weight: .semibold, design: .serif))
+                    .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05).opacity(0.5))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 14)
+                    .overlay(alignment: .top) {
+                        Rectangle()
+                            .fill(Color(red: 0.12, green: 0.08, blue: 0.04).opacity(0.22))
+                            .frame(height: 1)
+                    }
+
+                ForEach(moreApps) { app in
+                    Button {
+                        openURL(app.storeURL)
+                    } label: {
+                        moreAppRow(app)
+                    }
+                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
+                }
+            }
         }
         .padding(.top, 64)
         .padding(.horizontal, 54)
@@ -403,9 +438,58 @@ private struct CicadaAboutView: View {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
     }
 
+    private var moreApps: [MoreApp] {
+        [
+            MoreApp(
+                iconName: "PhotoTransferAppIcon",
+                name: "PhotoTransfer",
+                subtitle: language.photoTransferSubtitle,
+                storeURL: URL(string: "https://apps.apple.com/app/id6788644906")!
+            )
+        ]
+    }
+
     private func openAppStore() {
         guard let url = URL(string: "https://apps.apple.com/cn/app/id6797866440") else { return }
         openURL(url)
+    }
+
+    private func moreAppRow(_ app: MoreApp) -> some View {
+        HStack(spacing: 12) {
+            Image(app.iconName)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color(red: 0.98, green: 0.88, blue: 0.62).opacity(0.72), lineWidth: 1)
+                }
+                .shadow(color: Color(red: 0.12, green: 0.08, blue: 0.04).opacity(0.22), radius: 6, y: 3)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(app.name)
+                    .font(.system(size: 17, weight: .semibold, design: .serif))
+                    .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05))
+                Text(app.subtitle)
+                    .font(.system(size: 12, weight: .regular, design: .serif))
+                    .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05).opacity(0.55))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color(red: 0.14, green: 0.09, blue: 0.05).opacity(0.38))
+        }
+        .padding(.vertical, 14)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color(red: 0.12, green: 0.08, blue: 0.04).opacity(0.22))
+                .frame(height: 1)
+        }
     }
 
     private func aboutRow(title: String, value: String, showsChevron: Bool = false) -> some View {
