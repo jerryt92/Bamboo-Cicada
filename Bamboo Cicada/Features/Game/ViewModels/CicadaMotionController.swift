@@ -6,6 +6,7 @@
 import Combine
 import CoreMotion
 import Foundation
+import UIKit
 
 @MainActor
 final class CicadaMotionController: ObservableObject {
@@ -22,6 +23,8 @@ final class CicadaMotionController: ObservableObject {
     @Published var frictionHapticPulseID = 0
     @Published var frictionHapticLevel: Double = 0
     @Published var rotationPeriod: TimeInterval = 1.5
+    // 当前界面方向；展开宽屏锁定横屏时，需要把设备坐标系换算到屏幕坐标系。
+    var interfaceOrientation: UIInterfaceOrientation = .portrait
 
     private let manager = CMMotionManager()
     private let queue = OperationQueue()
@@ -66,12 +69,15 @@ final class CicadaMotionController: ObservableObject {
                 let nextSway = max(-1, min(1, acceleration.x * 0.75))
 
                 Task { @MainActor [weak self] in
-                    self?.gravityX = gravity.x
-                    self?.gravityY = gravity.y
-                    self?.accelerationX = acceleration.x
-                    self?.accelerationY = acceleration.y
-                    self?.rawIntensity = nextIntensity
-                    self?.rawSway = nextSway
+                    guard let self else { return }
+                    let screenGravity = Self.screenVector(x: gravity.x, y: gravity.y, orientation: self.interfaceOrientation)
+                    let screenAcceleration = Self.screenVector(x: acceleration.x, y: acceleration.y, orientation: self.interfaceOrientation)
+                    self.gravityX = screenGravity.x
+                    self.gravityY = screenGravity.y
+                    self.accelerationX = screenAcceleration.x
+                    self.accelerationY = screenAcceleration.y
+                    self.rawIntensity = nextIntensity
+                    self.rawSway = nextSway
                 }
             }
         } else if manager.isAccelerometerAvailable {
@@ -83,15 +89,32 @@ final class CicadaMotionController: ObservableObject {
                 let nextSway = max(-1, min(1, acceleration.x * 0.75))
 
                 Task { @MainActor [weak self] in
+                    guard let self else { return }
                     // 没有 deviceMotion 时只能用加速度计近似重力，仍然走同一个刚性绳模型。
-                    self?.gravityX = acceleration.x
-                    self?.gravityY = acceleration.y
-                    self?.accelerationX = 0
-                    self?.accelerationY = 0
-                    self?.rawIntensity = shake
-                    self?.rawSway = nextSway
+                    let screenGravity = Self.screenVector(x: acceleration.x, y: acceleration.y, orientation: self.interfaceOrientation)
+                    self.gravityX = screenGravity.x
+                    self.gravityY = screenGravity.y
+                    self.accelerationX = 0
+                    self.accelerationY = 0
+                    self.rawIntensity = shake
+                    self.rawSway = nextSway
                 }
             }
+        }
+    }
+
+    /// 把 CoreMotion 设备坐标系（竖持：x 向右、y 向上）的平面向量换算到当前界面方向的屏幕坐标系。
+    private static func screenVector(x: Double, y: Double, orientation: UIInterfaceOrientation) -> (x: Double, y: Double) {
+        switch orientation {
+        case .portraitUpsideDown:
+            return (-x, -y)
+        case .landscapeRight:
+            // 设备顶部朝左：屏幕向上对应设备 +x，屏幕向右对应设备 -y。
+            return (-y, x)
+        case .landscapeLeft:
+            return (y, -x)
+        default:
+            return (x, y)
         }
     }
 

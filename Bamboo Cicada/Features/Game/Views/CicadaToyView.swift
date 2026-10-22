@@ -17,7 +17,9 @@ struct CicadaToyView: View {
             let width = proxy.size.width
             let height = proxy.size.height
             let center = CGPoint(x: width * 0.5, y: height * 0.5)
-            let cicadaScale: CGFloat = 0.72
+            // 以 390pt 宽的普通 iPhone 为基准，大屏（如 iPhone Duo 展开）等比放大，普通机型保持不变。
+            let sizeScale = min(max(min(width, height) / 390, 1), 1.8)
+            let cicadaScale: CGFloat = 0.72 * sizeScale
             let cicadaBodyHeight: CGFloat = 166
             let cicadaBodyHalfHeight = cicadaBodyHeight * 0.5
             let radius = min(width, height) * 0.36
@@ -36,13 +38,13 @@ struct CicadaToyView: View {
             )
 
             ZStack {
-                bambooStick(height: height, center: center, style: style)
+                bambooStick(height: height, center: center, sizeScale: sizeScale, style: style)
 
-                cord(from: center, to: cordAttachment)
+                cord(from: center, to: cordAttachment, sizeScale: sizeScale)
 
                 cicadaBody(x: cicadaCenter.x, y: cicadaCenter.y, rotation: bodyRotation, scale: cicadaScale, style: style)
 
-                beadPair(x: center.x, y: center.y, style: style)
+                beadPair(x: center.x, y: center.y, sizeScale: sizeScale, style: style)
             }
             .transaction { transaction in
                 transaction.animation = nil
@@ -57,7 +59,8 @@ struct CicadaToyView: View {
         )
     }
 
-    private func bambooStick(height: CGFloat, center: CGPoint, style _: CicadaStyle) -> some View {
+    /// 绘制竹签，宽度与高光随尺寸系数缩放。
+    private func bambooStick(height: CGFloat, center: CGPoint, sizeScale: CGFloat, style _: CicadaStyle) -> some View {
         let stickLength = height - center.y + 72
         let stickCenterY = center.y + stickLength * 0.5 - 28
 
@@ -66,23 +69,25 @@ struct CicadaToyView: View {
             .overlay(alignment: .top) {
                 Capsule()
                     .fill(Color.white.opacity(0.32))
-                    .frame(width: 6, height: stickLength * 0.82)
-                    .offset(x: -5, y: stickLength * 0.08)
+                    .frame(width: 6 * sizeScale, height: stickLength * 0.82)
+                    .offset(x: -5 * sizeScale, y: stickLength * 0.08)
             }
-            .frame(width: 16, height: stickLength)
+            .frame(width: 16 * sizeScale, height: stickLength)
             .position(x: center.x, y: stickCenterY)
             .shadow(color: .black.opacity(0.2), radius: 8, y: 5)
     }
 
-    private func cord(from start: CGPoint, to end: CGPoint) -> some View {
+    /// 绘制珠子到知了之间的绳子，线宽随尺寸系数缩放。
+    private func cord(from start: CGPoint, to end: CGPoint, sizeScale: CGFloat) -> some View {
         return Path { path in
             path.move(to: start)
             path.addLine(to: end)
         }
-        .stroke(Color(red: 0.62, green: 0.58, blue: 0.43), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+        .stroke(Color(red: 0.62, green: 0.58, blue: 0.43), style: StrokeStyle(lineWidth: 1.5 * sizeScale, lineCap: .round))
     }
 
-    private func beadPair(x: CGFloat, y: CGFloat, style: CicadaStyle) -> some View {
+    /// 绘制中心的一对珠子，整体随尺寸系数缩放。
+    private func beadPair(x: CGFloat, y: CGFloat, sizeScale: CGFloat, style: CicadaStyle) -> some View {
         ZStack {
             VStack(spacing: 6) {
                 Circle()
@@ -100,6 +105,7 @@ struct CicadaToyView: View {
             }
             .offset(x: -5, y: 0)
         }
+        .scaleEffect(sizeScale)
         .shadow(color: .black.opacity(0.22), radius: 8, y: 6)
         .position(x: x, y: y)
     }

@@ -71,8 +71,11 @@ struct ContentView: View {
                     .frame(width: canvasSize.width, height: canvasSize.height)
                     .position(x: canvasSize.width * 0.5, y: canvasSize.height * 0.5)
 
-                    WindowBoundsReader(size: $windowSize)
-                        .frame(width: 0, height: 0)
+                    WindowBoundsReader(size: $windowSize) { scene in
+                        AppDelegate.refresh(for: scene)
+                        motion.interfaceOrientation = scene.interfaceOrientation
+                    }
+                    .frame(width: 0, height: 0)
                 }
                 .frame(width: canvasSize.width, height: canvasSize.height)
                 .ignoresSafeArea(.all)

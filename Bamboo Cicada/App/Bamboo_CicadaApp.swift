@@ -9,6 +9,8 @@ import SwiftUI
 
 @main
 struct Bamboo_CicadaApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     var body: some Scene {
         WindowGroup {
             ZStack {
