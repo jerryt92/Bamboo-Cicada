@@ -60,7 +60,7 @@ final class CicadaMotionController: ObservableObject {
         manager.accelerometerUpdateInterval = 1.0 / CicadaTuning.framesPerSecond
 
         if manager.isDeviceMotionAvailable {
-            manager.startDeviceMotionUpdates(to: queue) { motion, _ in
+            manager.startDeviceMotionUpdates(to: queue) { [weak self] motion, _ in
                 guard let motion else { return }
                 let gravity = motion.gravity
                 let acceleration = motion.userAcceleration
@@ -68,7 +68,7 @@ final class CicadaMotionController: ObservableObject {
                 let nextIntensity = min(1, accelerationStrength)
                 let nextSway = max(-1, min(1, acceleration.x * 0.75))
 
-                Task { @MainActor [weak self] in
+                Task { @MainActor in
                     guard let self else { return }
                     let screenGravity = Self.screenVector(x: gravity.x, y: gravity.y, orientation: self.interfaceOrientation)
                     let screenAcceleration = Self.screenVector(x: acceleration.x, y: acceleration.y, orientation: self.interfaceOrientation)
@@ -81,14 +81,14 @@ final class CicadaMotionController: ObservableObject {
                 }
             }
         } else if manager.isAccelerometerAvailable {
-            manager.startAccelerometerUpdates(to: queue) { data, _ in
+            manager.startAccelerometerUpdates(to: queue) { [weak self] data, _ in
                 guard let data else { return }
                 let acceleration = data.acceleration
                 let accelerationMagnitude = hypot(acceleration.x, hypot(acceleration.y, acceleration.z))
                 let shake = min(1, abs(accelerationMagnitude - 1.0) / 0.32)
                 let nextSway = max(-1, min(1, acceleration.x * 0.75))
 
-                Task { @MainActor [weak self] in
+                Task { @MainActor in
                     guard let self else { return }
                     // 没有 deviceMotion 时只能用加速度计近似重力，仍然走同一个刚性绳模型。
                     let screenGravity = Self.screenVector(x: acceleration.x, y: acceleration.y, orientation: self.interfaceOrientation)

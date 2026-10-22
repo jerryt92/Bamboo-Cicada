@@ -19,9 +19,10 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         self = AppLanguage(rawValue: code) ?? .zh
     }
 
+    /// 按系统首选语言解析介绍页文案。语言代码优先取应用本地化，再退回区域设置。
     init(locale: Locale) {
         let preferredLanguage = Bundle.main.preferredLocalizations.first
-        let languageCode = preferredLanguage ?? locale.languageCode ?? "zh"
+        let languageCode = preferredLanguage ?? locale.language.languageCode?.identifier ?? "zh"
         let resolvedLanguage: AppLanguage
         if languageCode.hasPrefix("ja") {
             resolvedLanguage = .ja

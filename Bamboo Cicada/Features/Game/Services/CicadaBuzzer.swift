@@ -110,15 +110,16 @@ final class CicadaBuzzer: ObservableObject {
 
     private func loadPlayers(from url: URL) {
         do {
-            players = try (0..<playerPoolSize).map { _ in
+            let loadedPlayers = try (0..<playerPoolSize).map { _ in
                 let audioPlayer = try AVAudioPlayer(contentsOf: url)
                 audioPlayer.numberOfLoops = 0
                 audioPlayer.enableRate = true
                 audioPlayer.rate = 1
                 audioPlayer.volume = 1
-                audioPlayer.prepareToPlay()
                 return audioPlayer
             }
+            players = loadedPlayers
+            preparePlayersOffMainThread(loadedPlayers)
             prewarmAudioHardware()
             updateStatus(triggered: false)
         } catch {
@@ -134,24 +135,72 @@ final class CicadaBuzzer: ObservableObject {
 
         activateAudioSession()
         installAudioObservers()
-        players.forEach { player in
-            player.volume = 1
-            player.prepareToPlay()
-        }
+        preparePlayersOffMainThread(players)
         hasSyncedIdle = true
         prewarmAudioHardware()
         updateStatus(triggered: false)
     }
 
+    /// 在音频队列上配置并激活会话，避免同步音频接口卡住界面。
     private func activateAudioSession() {
-        do {
+        audioQueue.async { [weak self] in
+            let buzzer = self
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .default, options: [.allowBluetoothA2DP])
-            try session.setPreferredSampleRate(44_100)
-            try session.setPreferredIOBufferDuration(0.005)
+            do {
+                try Self.configurePlaybackSession(session)
+                try Self.activatePlaybackSession(session) { message in
+                    Task { @MainActor in
+                        buzzer?.statusText = "音频恢复失败: \(message)"
+                    }
+                }
+            } catch {
+                let message = error.localizedDescription
+                Task { @MainActor in
+                    buzzer?.statusText = "音频恢复失败: \(message)"
+                }
+            }
+        }
+    }
+
+    /// 设置播放分类、采样率和 IO 缓冲。采样率与缓冲要在会话激活前设置。
+    nonisolated private static func configurePlaybackSession(_ session: AVAudioSession) throws {
+        try session.setCategory(.playback, mode: .default, options: [.allowBluetoothA2DP])
+        try session.setPreferredSampleRate(44_100)
+        try session.setPreferredIOBufferDuration(0.005)
+    }
+
+    /// 激活播放会话。系统提供异步接口时走异步激活，旧系统则在当前后台队列上同步激活。
+    nonisolated private static func activatePlaybackSession(
+        _ session: AVAudioSession,
+        onFailure: @escaping @Sendable (String) -> Void
+    ) throws {
+        if #available(iOS 27.0, *) {
+            session.activate(options: []) { _, error in
+                guard let error else { return }
+                onFailure(error.localizedDescription)
+            }
+        } else {
             try session.setActive(true)
-        } catch {
-            statusText = "音频恢复失败: \(error.localizedDescription)"
+        }
+    }
+
+    /// 停用播放会话，并通知其他应用可以恢复播放。
+    nonisolated private static func deactivatePlaybackSession() {
+        let session = AVAudioSession.sharedInstance()
+        if #available(iOS 27.0, *) {
+            session.deactivate(options: .notifyOthersOnDeactivation) { _, _ in }
+        } else {
+            try? session.setActive(false, options: .notifyOthersOnDeactivation)
+        }
+    }
+
+    /// 离开主线程预热播放器，避免 prepareToPlay 卡住界面。
+    private func preparePlayersOffMainThread(_ players: [AVAudioPlayer]) {
+        audioQueue.async {
+            players.forEach { player in
+                player.volume = 1
+                player.prepareToPlay()
+            }
         }
     }
 
@@ -185,13 +234,13 @@ final class CicadaBuzzer: ObservableObject {
                 player.currentTime = 0
                 player.volume = 1
             }
+            Self.deactivatePlaybackSession()
         }
         nextPlayerIndex = 0
         hasSyncedIdle = true
         isRunning = false
         hasPrewarmedAudioHardware = false
         removeAudioObservers()
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     func pauseForPresentation() {

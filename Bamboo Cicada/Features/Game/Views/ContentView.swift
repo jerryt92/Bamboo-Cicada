@@ -108,21 +108,21 @@ struct ContentView: View {
         .onDisappear {
             stopGame()
         }
-        .onChange(of: scenePhase) { phase in
+        .onChange(of: scenePhase) { _, phase in
             if phase == .active, !isShowingIntroduction {
                 UIApplication.shared.isIdleTimerDisabled = true
                 buzzer.restoreAudioSession()
                 haptics.prepare()
             }
         }
-        .onChange(of: isShowingIntroduction) { isPresented in
+        .onChange(of: isShowingIntroduction) { _, isPresented in
             if isPresented {
                 pauseGameForPresentation()
             } else {
                 startGame(wakeHaptics: false)
             }
         }
-        .onChange(of: audioSelectionRawValue) { _ in
+        .onChange(of: audioSelectionRawValue) {
             buzzer.reload(with: AudioSelection(rawValue: audioSelectionRawValue) ?? .wawawa1)
         }
         .onReceive(displayLink.$tick) { _ in

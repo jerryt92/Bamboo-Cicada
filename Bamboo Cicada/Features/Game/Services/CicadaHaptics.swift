@@ -176,8 +176,8 @@ final class CicadaHaptics: ObservableObject {
         guard !hasPendingPrepare else { return }
         hasPendingPrepare = true
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) {
-            Task { @MainActor [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) { [weak self] in
+            Task { @MainActor in
                 guard let self else { return }
                 self.hasPendingPrepare = false
                 self.prepare()
